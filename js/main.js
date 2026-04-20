@@ -4,7 +4,7 @@ var materialGroups = [
     category: "nai",
     categoryName: "奶",
     titlePrefix: "奶龙素材",
-    folder: "images/photos/奶/",
+    folder: "https://image.hakimi.uno/images/photos/奶/",
     files: [
       "图片00001.jpg",
       "图片00003.jpg",
@@ -33,7 +33,7 @@ var materialGroups = [
     category: "naiguo",
     categoryName: "奶果",
     titlePrefix: "奶果素材",
-    folder: "images/photos/奶果/",
+    folder: "https://image.hakimi.uno/images/photos/奶果/",
     files: [
       "图片00001.jpg",
       "图片00002.png",
@@ -48,7 +48,7 @@ var materialGroups = [
     category: "naiqi",
     categoryName: "奶气",
     titlePrefix: "奶气素材",
-    folder: "images/photos/奶气/",
+    folder: "https://image.hakimi.uno/images/photos/奶气/",
     files: [
       "图片00001.jpg",
       "图片00002.jpg",
@@ -63,7 +63,7 @@ var materialGroups = [
     category: "gifs",
     categoryName: "动态表情",
     titlePrefix: "动态表情",
-    folder: "images/gifs/",
+    folder: "https://image.hakimi.uno/images/gifs/",
     files: [
       "gif1.jpg",
       "gif2.jpg",
@@ -88,7 +88,7 @@ var materialGroups = [
     category: "letters",
     categoryName: "奶龙字母",
     titlePrefix: "字母素材",
-    folder: "images/奶龙字母/",
+    folder: "https://image.hakimi.uno/images/奶龙字母/",
     files: [
       "OK.jpg",
       "A.jpg",
@@ -123,7 +123,7 @@ var materialGroups = [
 
 // ===== 首页轮播图：从动态表情文件夹中随机抽 3 张 =====
 var bannerSlides = [];
-for(var i = 0;i < 3;i++) {
+for (var i = 0; i < 3; i++) {
   var group = materialGroups[3];
   var fileIndex = Math.floor(Math.random() * group.files.length);
   var file = group.files[fileIndex];
@@ -296,10 +296,10 @@ function drawWordImage(word) {
 
   var paths = [];
   if (word === "OK") {
-    paths.push("images/奶龙字母/OK.jpg");
+    paths.push("https://image.hakimi.uno/images/奶龙字母/OK.jpg");
   } else {
     for (var i = 0; i < word.length; i++) {
-      paths.push("images/奶龙字母/" + word.charAt(i) + ".jpg");
+      paths.push("https://image.hakimi.uno/images/奶龙字母/" + word.charAt(i) + ".jpg");
     }
   }
 
@@ -347,7 +347,7 @@ function initSlider() {
     return;
   }
   var imgs = document.querySelectorAll(".collage-card img");
-  for(var i = 0;i < imgs.length;i++) {
+  for (var i = 0; i < imgs.length; i++) {
     imgs[i].src = bannerSlides[i].src;
     imgs[i].alt = bannerSlides[i].alt;
   }
