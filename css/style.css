@@ -109,6 +109,7 @@ textarea {
 .slide-dot {
   border-radius: 30px;
   transition: background-color 0.2s ease, transform 0.2s ease;
+  z-index: 10;
 }
 
 .nav a {
@@ -139,6 +140,7 @@ textarea {
 .section-shell {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
+  z-index: 9999;
 }
 
 /* ===== 首页主视觉和按钮 ===== */
@@ -309,27 +311,6 @@ textarea {
   100% {
     transform: rotate(-1.8deg) translate(0, 0);
   }
-}
-
-.slider-controls {
-  position: absolute;
-  left: 20px;
-  bottom: 20px;
-  display: flex;
-  gap: 8px;
-}
-
-.slide-dot {
-  width: 34px;
-  height: 34px;
-  border: 0;
-  background: rgba(255, 255, 255, 0.82);
-  cursor: pointer;
-}
-
-.slide-dot.active {
-  background: var(--text);
-  color: var(--white);
 }
 
 /* ===== 首页内容区和侧栏布局 ===== */
