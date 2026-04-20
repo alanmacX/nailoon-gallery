@@ -1,150 +1,65 @@
-// ===== 素材数据：按文件夹分类保存 =====
-var materialGroups = [
-  {
-    category: "nai",
-    categoryName: "奶",
-    titlePrefix: "奶龙素材",
-    folder: "https://image.hakimi.uno/images/photos/奶/",
-    files: [
-      "图片00001.jpg",
-      "图片00003.jpg",
-      "图片00004.jpg",
-      "图片00005.jpg",
-      "图片00006.jpg",
-      "图片00007.jpg",
-      "图片00008.png",
-      "图片00009.jpg",
-      "图片00010.png",
-      "图片00011.jpg",
-      "图片00012.jpg",
-      "图片00013.jpg",
-      "图片00015.jpg",
-      "图片00016.jpg",
-      "图片00017.jpg",
-      "图片00018.jpg",
-      "图片00019.jpg",
-      "图片00020.jpg",
-      "图片00021.jpg",
-      "图片00022.jpg",
-      "图片00023.jpg"
-    ]
-  },
-  {
-    category: "naiguo",
-    categoryName: "奶果",
-    titlePrefix: "奶果素材",
-    folder: "https://image.hakimi.uno/images/photos/奶果/",
-    files: [
-      "图片00001.jpg",
-      "图片00002.png",
-      "图片00003.png",
-      "图片00004.png",
-      "图片00005.png",
-      "图片00006.png",
-      "图片00007.png"
-    ]
-  },
-  {
-    category: "naiqi",
-    categoryName: "奶气",
-    titlePrefix: "奶气素材",
-    folder: "https://image.hakimi.uno/images/photos/奶气/",
-    files: [
-      "图片00001.jpg",
-      "图片00002.jpg",
-      "图片00004.jpg",
-      "图片00006.jpg",
-      "图片00007.jpg",
-      "图片00008.jpg",
-      "图片00009.jpg"
-    ]
-  },
-  {
-    category: "gifs",
-    categoryName: "动态表情",
-    titlePrefix: "动态表情",
-    folder: "https://image.hakimi.uno/images/gifs/",
-    files: [
-      "gif1.jpg",
-      "gif2.jpg",
-      "gif3.jpg",
-      "gif4.jpg",
-      "gif5.jpg",
-      "gif6.jpg",
-      "gif7.jpg",
-      "gif8.jpg",
-      "gif9.jpg",
-      "gif10.jpg",
-      "gif11.jpg",
-      "gif12.jpg",
-      "gif13.jpg",
-      "gif14.jpg",
-      "gif15.jpg",
-      "gif16.jpg",
-      "gif17.jpg"
-    ]
-  },
-  {
-    category: "letters",
-    categoryName: "奶龙字母",
-    titlePrefix: "字母素材",
-    folder: "https://image.hakimi.uno/images/奶龙字母/",
-    files: [
-      "OK.jpg",
-      "A.jpg",
-      "B.jpg",
-      "C.jpg",
-      "D.jpg",
-      "E.jpg",
-      "F.jpg",
-      "G.jpg",
-      "H.jpg",
-      "I.jpg",
-      "J.jpg",
-      "K.jpg",
-      "L.jpg",
-      "M.jpg",
-      "N.jpg",
-      "O.jpg",
-      "P.jpg",
-      "Q.jpg",
-      "R.jpg",
-      "S.jpg",
-      "T.jpg",
-      "U.jpg",
-      "V.jpg",
-      "W.jpg",
-      "X.jpg",
-      "Y.jpg",
-      "Z.jpg"
-    ]
-  }
+// ===== 基础配置：定义目录映射关系 =====
+const materialConfig = [
+  { category: "nai", name: "奶", prefix: "奶龙素材", path: "/images/photos/奶/" },
+  { category: "naiguo", name: "奶果", prefix: "奶果素材", path: "/images/photos/奶果/" },
+  { category: "naiqi", name: "奶气", prefix: "奶气素材", path: "/images/photos/奶气/" },
+  { category: "gifs", name: "动态表情", prefix: "动态表情", path: "/images/gifs/" },
+  { category: "letters", name: "奶龙字母", prefix: "字母素材", path: "/images/奶龙字母/" },
+  { category: "stickers", name: "表情包", prefix: "表情包", path: "/images/表情包/" }
 ];
 
-// ===== 首页轮播图：从动态表情文件夹中随机抽 3 张 =====
-var bannerSlides = [];
-for (var i = 0; i < 3; i++) {
-  var group = materialGroups[3];
-  var fileIndex = Math.floor(Math.random() * group.files.length);
-  var file = group.files[fileIndex];
-  if (bannerSlides.some(function (slide) { return slide.src === group.folder + file; })) {
-    i--;
-    continue;
+const BASE_URL = "https://image.hakimi.uno";
+var materialGroups = []; // 动态填充后的全局变量
+var bannerSlides = [];   // 动态生成的轮播图
+
+// ===== 核心：异步获取所有资源列表 =====
+async function fetchAllMaterials() {
+  try {
+    const promises = materialConfig.map(async (cfg) => {
+      const response = await fetch(BASE_URL + cfg.path);
+      if (!response.ok) throw new Error("无法访问 " + cfg.path);
+      const json = await response.json();
+
+      return {
+        category: cfg.category,
+        categoryName: cfg.name,
+        titlePrefix: cfg.prefix,
+        folder: BASE_URL + cfg.path,
+        // 过滤文件，只保留图片
+        files: json
+          .filter(f => f.type === 'file' && /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name))
+          .map(f => f.name)
+      };
+    });
+
+    materialGroups = await Promise.all(promises);
+
+    // 数据准备好后，初始化依赖数据的模块
+    initDynamicModules();
+
+  } catch (error) {
+    console.error("加载素材失败:", error);
+    alert("素材库加载失败，请检查网络或 Nginx 配置。");
   }
-  bannerSlides.push({
-    src: group.folder + file,
-    alt: group.categoryName
-  });
 }
 
-var categoryState = {
-  currentCategory: "all",
-  currentPage: 1,
-  pageSize: 9
-};
+// ===== 初始化依赖数据的模块 =====
+function initDynamicModules() {
+  // 1. 生成轮播图数据 (原逻辑：从第 4 个分类 gifs 中随机抽 3 张)
+  var time = new Date().getTime();
+  var gifGroup = materialGroups[3]; // gifs 所在的索引
+  if (gifGroup && gifGroup.files.length > 0) {
+    while (bannerSlides.length < 3 && gifGroup.files.length >= 3) {
+      var fileIndex = Math.floor(Math.random() * gifGroup.files.length);
+      var file = gifGroup.files[fileIndex] + "?t=" + time;
+      var fullSrc = gifGroup.folder + file;
 
-// ===== 页面加载后，按页面上是否存在对应元素来初始化功能 =====
-document.addEventListener("DOMContentLoaded", function () {
+      if (!bannerSlides.some(s => s.src === fullSrc)) {
+        bannerSlides.push({ src: fullSrc, alt: gifGroup.categoryName });
+      }
+    }
+  }
+
   showCurrentUser();
   initLoginForm();
   initPersonalityForm();
@@ -155,7 +70,19 @@ document.addEventListener("DOMContentLoaded", function () {
   initCollectionPage();
   initCategoryPage();
   initDragAndDrop();
+}
+
+// ===== 页面加载入口 =====
+document.addEventListener("DOMContentLoaded", function () {
+  // 先拉取数据，数据回来后会自动调用 initDynamicModules
+  fetchAllMaterials();
 });
+
+var categoryState = {
+  currentCategory: "all",
+  currentPage: 1,
+  pageSize: 9
+};
 
 // ===== 用户状态：读取本地保存的用户名 =====
 function showCurrentUser() {
@@ -300,14 +227,19 @@ function drawWordImage(word) {
 
   var paths = [];
   if (word === "OK") {
-    paths.push("https://image.hakimi.uno/images/奶龙字母/OK.jpg");
+    paths.push(BASE_URL + "/images/奶龙字母/OK.jpg");
   } else {
     for (var i = 0; i < word.length; i++) {
-      paths.push("https://image.hakimi.uno/images/奶龙字母/" + word.charAt(i) + ".jpg");
+      paths.push(BASE_URL + "/images/奶龙字母/" + word.charAt(i) + ".jpg");
     }
   }
 
-  loadImages(paths, function (images) {
+  loadImages(paths, function (images, failed) {
+    if (failed > 0) {
+      setError("wordInputError", "有字母素材加载失败，请稍后重试。");
+      return;
+    }
+
     var ctx = canvas.getContext("2d");
     var cell = 120;
     var gap = 0;
@@ -320,9 +252,16 @@ function drawWordImage(word) {
       ctx.drawImage(images[i], x, 0, cell, cell);
     }
 
-    download.href = canvas.toDataURL("image/png");
-    download.download = "nailong-word-" + word + ".png";
-    download.className = "btn primary";
+    try {
+      download.href = canvas.toDataURL("image/png");
+      download.download = "nailong-word-" + word + ".png";
+      download.className = "btn primary";
+    } catch (error) {
+      console.error("导出图片失败:", error);
+      setError("wordInputError", "当前环境不允许导出跨域图片，请在同源站点访问或开启图片 CORS。");
+      download.removeAttribute("href");
+      download.className = "btn";
+    }
   });
 }
 
@@ -330,12 +269,27 @@ function drawWordImage(word) {
 function loadImages(paths, callback) {
   var images = [];
   var loaded = 0;
+  var failed = 0;
+
+  if (paths.length === 0) {
+    callback(images, failed);
+    return;
+  }
+
   for (var i = 0; i < paths.length; i++) {
     var img = new Image();
+    img.crossOrigin = "anonymous";
     img.onload = function () {
       loaded++;
       if (loaded === paths.length) {
-        callback(images);
+        callback(images, failed);
+      }
+    };
+    img.onerror = function () {
+      failed++;
+      loaded++;
+      if (loaded === paths.length) {
+        callback(images, failed);
       }
     };
     img.src = paths[i];
@@ -456,6 +410,21 @@ function initCanvas() {
   drawFrame();
 }
 
+// ===== 分类页：根据 materialGroups 动态生成分类按钮 =====
+function renderCategoryTabs() {
+  var tabsContainer = document.getElementById("categoryTabs");
+  if (!tabsContainer) {
+    return;
+  }
+
+  var html = '<button class="tab active" type="button" data-category="all">全部</button>';
+  for (var i = 0; i < materialGroups.length; i++) {
+    html += '<button class="tab" type="button" data-category="' + materialGroups[i].category + '">' + materialGroups[i].categoryName + '</button>';
+  }
+
+  tabsContainer.innerHTML = html;
+}
+
 // ===== 分类页：绑定分类按钮并渲染素材 =====
 function initCategoryPage() {
   var grid = document.getElementById("categoryGrid");
@@ -463,7 +432,14 @@ function initCategoryPage() {
     return;
   }
 
-  var tabs = document.querySelectorAll(".tab");
+  renderCategoryTabs();
+
+  var tabsContainer = document.getElementById("categoryTabs");
+  if (!tabsContainer) {
+    return;
+  }
+
+  var tabs = tabsContainer.querySelectorAll(".tab");
   for (var i = 0; i < tabs.length; i++) {
     tabs[i].onclick = function () {
       categoryState.currentCategory = this.getAttribute("data-category");
