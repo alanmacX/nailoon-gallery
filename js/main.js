@@ -4,7 +4,7 @@ var materialGroups = [
     category: "nai",
     categoryName: "奶",
     titlePrefix: "奶龙素材",
-    folder: "images/photos/奶/",
+    folder: "https://image.hakimi.uno/images/photos/奶/",
     files: [
       "图片00001.jpg",
       "图片00003.jpg",
@@ -33,7 +33,7 @@ var materialGroups = [
     category: "naiguo",
     categoryName: "奶果",
     titlePrefix: "奶果素材",
-    folder: "images/photos/奶果/",
+    folder: "https://image.hakimi.uno/images/photos/奶果/",
     files: [
       "图片00001.jpg",
       "图片00002.png",
@@ -48,7 +48,7 @@ var materialGroups = [
     category: "naiqi",
     categoryName: "奶气",
     titlePrefix: "奶气素材",
-    folder: "images/photos/奶气/",
+    folder: "https://image.hakimi.uno/images/photos/奶气/",
     files: [
       "图片00001.jpg",
       "图片00002.jpg",
@@ -63,7 +63,7 @@ var materialGroups = [
     category: "gifs",
     categoryName: "动态表情",
     titlePrefix: "动态表情",
-    folder: "images/gifs/",
+    folder: "https://image.hakimi.uno/images/gifs/",
     files: [
       "gif1.jpg",
       "gif2.jpg",
@@ -88,7 +88,7 @@ var materialGroups = [
     category: "letters",
     categoryName: "奶龙字母",
     titlePrefix: "字母素材",
-    folder: "images/奶龙字母/",
+    folder: "https://image.hakimi.uno/images/奶龙字母/",
     files: [
       "OK.jpg",
       "A.jpg",
@@ -123,10 +123,14 @@ var materialGroups = [
 
 // ===== 首页轮播图：从动态表情文件夹中随机抽 3 张 =====
 var bannerSlides = [];
-for(var i = 0;i < 3;i++) {
+for (var i = 0; i < 3; i++) {
   var group = materialGroups[3];
   var fileIndex = Math.floor(Math.random() * group.files.length);
   var file = group.files[fileIndex];
+  if (bannerSlides.some(function (slide) { return slide.src === group.folder + file; })) {
+    i--;
+    continue;
+  }
   bannerSlides.push({
     src: group.folder + file,
     alt: group.categoryName
@@ -158,7 +162,7 @@ function showCurrentUser() {
   var userSpans = document.querySelectorAll("#currentUser");
   var username = localStorage.getItem("nailongUser") || "游客";
   for (var i = 0; i < userSpans.length; i++) {
-    userSpans[i].innerHTML = username;
+    userSpans[i].textContent = username;
   }
 }
 
@@ -166,7 +170,7 @@ function showCurrentUser() {
 function setError(id, message) {
   var element = document.getElementById(id);
   if (element) {
-    element.innerHTML = message;
+    element.textContent = message;
   }
 }
 
@@ -250,7 +254,7 @@ function initPersonalityForm() {
 
       document.getElementById("testResultImage").src = group.folder + file;
       document.getElementById("testResultImage").alt = title;
-      document.getElementById("testResultTitle").innerHTML = name + "，你是这个奶龙";
+      document.getElementById("testResultTitle").textContent = name + "，你是这个奶龙";
     }
   };
 }
@@ -296,10 +300,10 @@ function drawWordImage(word) {
 
   var paths = [];
   if (word === "OK") {
-    paths.push("images/奶龙字母/OK.jpg");
+    paths.push("https://image.hakimi.uno/images/奶龙字母/OK.jpg");
   } else {
     for (var i = 0; i < word.length; i++) {
-      paths.push("images/奶龙字母/" + word.charAt(i) + ".jpg");
+      paths.push("https://image.hakimi.uno/images/奶龙字母/" + word.charAt(i) + ".jpg");
     }
   }
 
@@ -342,12 +346,11 @@ function loadImages(paths, callback) {
 // ===== 首页拼贴轮播：切换 active，让当前 GIF 放大 =====
 function initSlider() {
   var cards = document.querySelectorAll(".collage-card");
-  var dots = document.querySelectorAll(".slide-dot");
-  if (cards.length === 0 || dots.length === 0) {
+  if (cards.length === 0) {
     return;
   }
   var imgs = document.querySelectorAll(".collage-card img");
-  for(var i = 0;i < imgs.length;i++) {
+  for (var i = 0; i < imgs.length; i++) {
     imgs[i].src = bannerSlides[i].src;
     imgs[i].alt = bannerSlides[i].alt;
   }
@@ -358,16 +361,8 @@ function initSlider() {
     index = nextIndex;
     for (var i = 0; i < cards.length; i++) {
       cards[i].className = "collage-card";
-      dots[i].className = "slide-dot";
     }
     cards[index].className = "collage-card active";
-    dots[index].className = "slide-dot active";
-  }
-
-  for (var i = 0; i < dots.length; i++) {
-    dots[i].onclick = function () {
-      showSlide(parseInt(this.getAttribute("data-slide"), 10));
-    };
   }
 
   setInterval(function () {
@@ -388,7 +383,7 @@ function initSmileVideo() {
   var playResult = video.play();
   if (playResult) {
     playResult.catch(function () {
-      button.innerHTML = "点击播放";
+      button.textContent = "点击播放";
     });
   }
 
@@ -396,7 +391,7 @@ function initSmileVideo() {
     video.muted = false;
     video.volume = 1;
     video.play();
-    button.innerHTML = "正在大笑";
+    button.textContent = "正在大笑";
   };
 }
 
