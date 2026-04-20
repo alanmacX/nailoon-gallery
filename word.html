@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>奶龙素材馆 | 奶龙组词</title>
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header glass">
+    <a class="logo" href="index.html">
+      <span class="logo-mark">N</span>
+      <span>奶龙素材馆</span>
+    </a>
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="category.html">分类</a>
+      <a href="detail.html">收藏</a>
+      <a class="active" href="word.html">奶龙组词</a>
+      <a href="contact.html">测试</a>
+      <a href="smile.html">大笑</a>
+      <a href="login.html">登录</a>
+    </nav>
+    <div class="user-pill">你好，<span id="currentUser">游客</span></div>
+  </header>
+
+  <main class="section-shell page-main word-layout">
+    <section class="form-card glass">
+      <h1>奶龙组词</h1>
+      <form id="wordForm" novalidate>
+        <label for="wordInput">输入英文</label>
+        <input id="wordInput" name="wordInput" type="text" maxlength="15" placeholder="例如 NAILONG">
+        <span class="error" id="wordInputError"></span>
+        <button class="btn primary full" type="submit">生成图片</button>
+      </form>
+    </section>
+
+    <section class="panel word-preview">
+      <canvas id="wordCanvas" width="760" height="176">您的浏览器不支持 Canvas。</canvas>
+      <a id="downloadWord" class="btn secondary" href="#">下载图片</a>
+    </section>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

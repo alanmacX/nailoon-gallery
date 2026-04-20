@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>奶龙素材馆 | 分类展示</title>
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header glass">
+    <a class="logo" href="index.html">
+      <span class="logo-mark">N</span>
+      <span>奶龙素材馆</span>
+    </a>
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a class="active" href="category.html">分类</a>
+      <a href="detail.html">收藏</a>
+      <a href="word.html">奶龙组词</a>
+      <a href="contact.html">测试</a>
+      <a href="smile.html">大笑</a>
+      <a href="login.html">登录</a>
+    </nav>
+    <div class="user-pill">你好，<span id="currentUser">游客</span></div>
+  </header>
+
+  <main class="section-shell page-main">
+    <section class="page-head">
+      <h1>奶龙素材分类</h1>
+      <div class="category-tabs" aria-label="分类筛选">
+        <button class="tab active" type="button" data-category="all">全部</button>
+        <button class="tab" type="button" data-category="nai">奶</button>
+        <button class="tab" type="button" data-category="naiguo">奶果</button>
+        <button class="tab" type="button" data-category="naiqi">奶气</button>
+        <button class="tab" type="button" data-category="gifs">动态表情</button>
+        <button class="tab" type="button" data-category="letters">奶龙字母</button>
+      </div>
+    </section>
+
+    <section class="category-layout">
+      <div>
+        <div id="categoryGrid" class="card-grid category-grid"></div>
+        <div id="pagination" class="pagination" aria-label="分页导航"></div>
+      </div>
+      <aside class="panel drop-panel">
+        <h2>我的收藏篮</h2>
+        <div id="dropZone" class="drop-zone">拖到这里收藏</div>
+        <button class="btn secondary clear-favorites" id="clearFavorites" type="button">一键清空</button>
+        <ul id="favoriteList" class="favorite-list"></ul>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2026 奶龙素材馆 | 分类展示子页面</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

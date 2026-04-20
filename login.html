@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>奶龙素材馆 | 登录</title>
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="simple-page">
+  <header class="site-header glass">
+    <a class="logo" href="index.html">
+      <span class="logo-mark">N</span>
+      <span>奶龙素材馆</span>
+    </a>
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="category.html">分类</a>
+      <a href="detail.html">收藏</a>
+      <a href="word.html">奶龙组词</a>
+      <a href="contact.html">测试</a>
+      <a href="smile.html">大笑</a>
+      <a class="active" href="login.html">登录</a>
+    </nav>
+    <div class="user-pill">你好，<span id="currentUser">游客</span></div>
+  </header>
+
+  <main class="form-wrap">
+    <section class="form-card glass">
+      <h1>输入昵称进入素材馆。</h1>
+      <form id="loginForm" novalidate>
+        <label for="username">昵称</label>
+        <input id="username" name="username" type="text" placeholder="请输入 2-12 位昵称">
+        <span class="error" id="usernameError"></span>
+
+        <button class="btn primary full" type="submit">进入素材馆</button>
+        <p class="form-note">昵称会保存在本地浏览器中，并显示在导航栏。</p>
+      </form>
+    </section>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>奶龙素材馆 | 首页</title>
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header glass">
+    <a class="logo" href="index.html" aria-label="奶龙素材馆首页">
+      <span class="logo-mark">N</span>
+      <span>奶龙素材馆</span>
+    </a>
+    <nav class="nav">
+      <a class="active" href="index.html">首页</a>
+      <a href="category.html">分类</a>
+      <a href="detail.html">收藏</a>
+      <a href="word.html">奶龙组词</a>
+      <a href="contact.html">测试</a>
+      <a href="smile.html">大笑</a>
+      <a href="login.html">登录</a>
+    </nav>
+    <div class="user-pill">你好，<span id="currentUser">游客</span></div>
+  </header>
+
+  <main>
+    <section class="hero section-shell">
+      <div class="hero-copy">
+        <h1>奶龙素材馆</h1>
+        <div class="hero-actions">
+          <a class="btn primary" href="category.html">开始逛逛</a>
+          <a class="btn secondary" href="contact.html">测测你是哪只奶龙</a>
+          <a class="btn third" href="word.html">孩子们拼写很有趣</a>
+        </div>
+      </div>
+      <div class="hero-visual collage-slider">
+        <div class="collage-card active" data-slide="0">
+          <div class="collage-spin">
+            <img src="images/gifs/gif1.jpg" alt="动态表情 1">
+          </div>
+        </div>
+        <div class="collage-card" data-slide="1">
+          <div class="collage-spin">
+            <img src="images/gifs/gif2.jpg" alt="动态表情 2">
+          </div>
+        </div>
+        <div class="collage-card" data-slide="2">
+          <div class="collage-spin">
+            <img src="images/gifs/gif3.jpg" alt="动态表情 3">
+          </div>
+        </div>
+        <div class="slider-controls" aria-label="图片切换">
+          <button type="button" class="slide-dot active" data-slide="0">1</button>
+          <button type="button" class="slide-dot" data-slide="1">2</button>
+          <button type="button" class="slide-dot" data-slide="2">3</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-layout section-shell">
+      <div class="main-column">
+        <section class="panel glass">
+          <div class="section-title">
+            <h2>今日推荐</h2>
+          </div>
+          <div class="card-grid">
+            <article class="feature-card gallery-card" draggable="true" data-title="奶龙素材 03" data-category="nai" data-file="图片00004.jpg">
+              <img src="images/photos/奶/图片00004.jpg" alt="奶龙素材">
+              <h3>奶</h3>
+            </article>
+            <article class="feature-card gallery-card" draggable="true" data-title="动态表情 01" data-category="gifs" data-file="gif00001.jpg">
+              <img src="images/gifs/gif1.jpg" alt="奶龙动态表情素材">
+              <h3>动态表情</h3>
+            </article>
+            <article class="feature-card gallery-card" draggable="true" data-title="OK" data-category="letters" data-file="OK.jpg">
+              <img src="images/奶龙字母/A.jpg" alt="奶龙字母素材">
+              <h3>奶龙字母</h3>
+            </article>
+          </div>
+        </section> 
+      </div>
+
+      <aside class="side-column">
+        <section class="panel drop-panel glass">
+          <h2>拖到收藏篮</h2>
+          <div id="dropZone" class="drop-zone">把喜欢的卡片放到这里</div>
+          <button class="btn secondary clear-favorites" id="clearFavorites" type="button">一键清空</button>
+          <ul id="favoriteList" class="favorite-list"></ul>
+        </section>
+        <section class="panel">
+          <h2>素材占比图</h2>
+          <canvas id="moodCanvas" width="320" height="220">您的浏览器不支持 Canvas。</canvas>
+        </section>
+      </aside>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <p>© 2026 奶龙素材馆</p>
+    <div class="share-links">
+      <a href="category.html">分类展示</a>
+      <a href="word.html">奶龙组词</a>
+      <a href="contact.html">人格测试</a>
+      <a href="smile.html">大笑视频</a>
+      <a href="login.html">用户登录</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

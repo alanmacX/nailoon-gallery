@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480" role="img" aria-labelledby="title desc">
+  <title id="title">奶龙表情素材插图</title>
+  <desc id="desc">黄色小龙和一杯饮品在清爽桌面上，适合作为表情素材封面。</desc>
+  <rect width="720" height="480" rx="34" fill="#ffffff"/>
+  <rect x="0" y="292" width="720" height="188" fill="#e8f8f1"/>
+  <circle cx="602" cy="96" r="72" fill="#ffd447" opacity="0.28"/>
+  <circle cx="132" cy="104" r="54" fill="#ff6f61" opacity="0.18"/>
+  <g transform="translate(104 88)">
+    <ellipse cx="214" cy="296" rx="146" ry="22" fill="#111827" opacity="0.08"/>
+    <path d="M135 132 C143 63, 196 26, 255 34 C322 44, 364 93, 354 164 C345 235, 293 292, 218 286 C147 280, 124 206, 135 132 Z" fill="#ffd84d"/>
+    <path d="M178 64 L156 18 L211 45 Z" fill="#ffd447"/>
+    <path d="M302 44 L358 16 L334 68 Z" fill="#ffd447"/>
+    <ellipse cx="238" cy="187" rx="78" ry="64" fill="#fff8db"/>
+    <ellipse cx="205" cy="142" rx="14" ry="20" fill="#1f2937"/>
+    <ellipse cx="278" cy="142" rx="14" ry="20" fill="#1f2937"/>
+    <path d="M222 209 C236 219, 251 219, 265 209" fill="none" stroke="#1f2937" stroke-width="6" stroke-linecap="round"/>
+    <path d="M97 189 C60 208, 65 249, 102 258" fill="none" stroke="#ffc83d" stroke-width="26" stroke-linecap="round"/>
+    <path d="M376 188 C413 205, 408 248, 372 258" fill="none" stroke="#ffc83d" stroke-width="26" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(444 178)">
+    <rect x="22" y="76" width="118" height="112" rx="22" fill="#ffffff" stroke="#111827" stroke-opacity="0.18" stroke-width="4"/>
+    <path d="M140 102 C186 100, 186 166, 140 164" fill="none" stroke="#111827" stroke-opacity="0.18" stroke-width="12" stroke-linecap="round"/>
+    <path d="M43 76 C42 44, 71 37, 67 8 M84 76 C84 42, 113 38, 108 10" fill="none" stroke="#ff6f61" stroke-width="7" stroke-linecap="round" opacity="0.7"/>
+    <rect x="36" y="103" width="90" height="58" rx="13" fill="#ffd447" opacity="0.85"/>
+  </g>
+</svg>
