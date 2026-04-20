@@ -127,6 +127,10 @@ for (var i = 0; i < 3; i++) {
   var group = materialGroups[3];
   var fileIndex = Math.floor(Math.random() * group.files.length);
   var file = group.files[fileIndex];
+  if (bannerSlides.some(function (slide) { return slide.src === group.folder + file; })) {
+    i--;
+    continue;
+  }
   bannerSlides.push({
     src: group.folder + file,
     alt: group.categoryName
@@ -158,7 +162,7 @@ function showCurrentUser() {
   var userSpans = document.querySelectorAll("#currentUser");
   var username = localStorage.getItem("nailongUser") || "游客";
   for (var i = 0; i < userSpans.length; i++) {
-    userSpans[i].innerHTML = username;
+    userSpans[i].textContent = username;
   }
 }
 
@@ -166,7 +170,7 @@ function showCurrentUser() {
 function setError(id, message) {
   var element = document.getElementById(id);
   if (element) {
-    element.innerHTML = message;
+    element.textContent = message;
   }
 }
 
@@ -250,7 +254,7 @@ function initPersonalityForm() {
 
       document.getElementById("testResultImage").src = group.folder + file;
       document.getElementById("testResultImage").alt = title;
-      document.getElementById("testResultTitle").innerHTML = name + "，你是这个奶龙";
+      document.getElementById("testResultTitle").textContent = name + "，你是这个奶龙";
     }
   };
 }
@@ -342,8 +346,7 @@ function loadImages(paths, callback) {
 // ===== 首页拼贴轮播：切换 active，让当前 GIF 放大 =====
 function initSlider() {
   var cards = document.querySelectorAll(".collage-card");
-  var dots = document.querySelectorAll(".slide-dot");
-  if (cards.length === 0 || dots.length === 0) {
+  if (cards.length === 0) {
     return;
   }
   var imgs = document.querySelectorAll(".collage-card img");
@@ -358,16 +361,8 @@ function initSlider() {
     index = nextIndex;
     for (var i = 0; i < cards.length; i++) {
       cards[i].className = "collage-card";
-      dots[i].className = "slide-dot";
     }
     cards[index].className = "collage-card active";
-    dots[index].className = "slide-dot active";
-  }
-
-  for (var i = 0; i < dots.length; i++) {
-    dots[i].onclick = function () {
-      showSlide(parseInt(this.getAttribute("data-slide"), 10));
-    };
   }
 
   setInterval(function () {
@@ -388,7 +383,7 @@ function initSmileVideo() {
   var playResult = video.play();
   if (playResult) {
     playResult.catch(function () {
-      button.innerHTML = "点击播放";
+      button.textContent = "点击播放";
     });
   }
 
@@ -396,7 +391,7 @@ function initSmileVideo() {
     video.muted = false;
     video.volume = 1;
     video.play();
-    button.innerHTML = "正在大笑";
+    button.textContent = "正在大笑";
   };
 }
 
