@@ -455,6 +455,40 @@ function initCategoryPage() {
   renderCategoryItems();
 }
 
+// ===== 分页组件：生成带省略号和前后翻页的分页按钮 =====
+function buildPagination(current, total) {
+  if (total <= 1) return "";
+  var html = "";
+
+  // 上一页
+  html += '<button type="button" ' + (current === 1 ? "disabled" : 'data-page="' + (current - 1) + '"') + '>&laquo;</button>';
+
+  // 计算要显示哪些页码
+  var pages = [];
+  var left = current - 2;
+  var right = current + 2;
+  if (left < 1) { right += (1 - left); left = 1; }
+  if (right > total) { left -= (right - total); right = total; }
+  if (left < 1) left = 1;
+
+  if (left > 1) { pages.push(1); if (left > 2) pages.push("..."); }
+  for (var i = left; i <= right; i++) pages.push(i);
+  if (right < total) { if (right < total - 1) pages.push("..."); pages.push(total); }
+
+  for (var j = 0; j < pages.length; j++) {
+    if (pages[j] === "...") {
+      html += '<span class="page-ellipsis">...</span>';
+    } else {
+      html += '<button type="button" class="' + (pages[j] === current ? "active" : "") + '" data-page="' + pages[j] + '">' + pages[j] + '</button>';
+    }
+  }
+
+  // 下一页
+  html += '<button type="button" ' + (current === total ? "disabled" : 'data-page="' + (current + 1) + '"') + '>&raquo;</button>';
+
+  return html;
+}
+
 // ===== 分类页：直接展开 materialGroups，生成当前分类的卡片和分页 =====
 function renderCategoryItems() {
   var grid = document.getElementById("categoryGrid");
@@ -497,17 +531,17 @@ function renderCategoryItems() {
 
   grid.innerHTML = html;
 
-  var pageHtml = "";
-  for (var page = 1; page <= totalPages; page++) {
-    pageHtml += '<button type="button" class="' + (page === categoryState.currentPage ? "active" : "") + '" data-page="' + page + '">' + page + "</button>";
-  }
-  pagination.innerHTML = pageHtml;
+  pagination.innerHTML = buildPagination(categoryState.currentPage, totalPages);
 
   var pageButtons = pagination.querySelectorAll("button");
   for (var b = 0; b < pageButtons.length; b++) {
     pageButtons[b].onclick = function () {
-      categoryState.currentPage = parseInt(this.getAttribute("data-page"), 10);
+      var page = this.getAttribute("data-page");
+      if (!page) return;
+      categoryState.currentPage = parseInt(page, 10);
       renderCategoryItems();
+      var gridEl = document.getElementById("categoryGrid");
+      if (gridEl) gridEl.scrollIntoView({ behavior: "smooth", block: "start" });
     };
   }
 
