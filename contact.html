@@ -35,43 +35,54 @@
         <input id="testName" name="testName" type="text" placeholder="请输入你的昵称">
         <span class="error" id="testNameError"></span>
 
-        <label for="moodChoice">路过遇到一只奶龙，你会怎么做</label>
-        <select id="moodChoice" name="moodChoice">
+        <label for="q1">地铁上，奶龙突然坐到你旁边，你的第一反应是</label>
+        <select id="q1" name="q1">
           <option value="">请选择</option>
-          <option value="happy">打死</option>
-          <option value="quiet">抱一下</option>
-          <option value="hungry">大喊</option>
-          <option value="lazy">踢一脚</option>
+          <option value="0">眼神死死钉在手机上，假装什么都没发生</option>
+          <option value="1">偷偷侧过去看了一眼，又迅速把头转回来</option>
+          <option value="2">立刻掏手机，先把证据留下来再说</option>
+          <option value="3">直接出声，邻座的人都回头看了</option>
         </select>
-        <span class="error" id="moodChoiceError"></span>
+        <span class="error" id="q1Error"></span>
 
-        <label for="colorChoice">最想带走的颜色</label>
-        <select id="colorChoice" name="colorChoice">
+        <label for="q2">深夜两点，你发现奶龙在厨房偷吃你的剩饭</label>
+        <select id="q2" name="q2">
           <option value="">请选择</option>
-          <option value="yellow">奶黄色</option>
-          <option value="green">清新绿</option>
-          <option value="blue">天空蓝</option>
-          <option value="pink">珊瑚粉</option>
+          <option value="0">悄悄把门带上，这件事烂在肚子里</option>
+          <option value="1">站在门口盯了它足足三分钟，什么都没说</option>
+          <option value="2">先开录像，证据比剩饭重要</option>
+          <option value="3">开口问它够不够，要不要帮它热一下</option>
         </select>
-        <span class="error" id="colorChoiceError"></span>
+        <span class="error" id="q2Error"></span>
 
-        <label for="snackChoice">如果奶龙请客</label>
-        <select id="snackChoice" name="snackChoice">
+        <label for="q3">奶龙跑来找你借100块，说下周还</label>
+        <select id="q3" name="q3">
           <option value="">请选择</option>
-          <option value="milk">喝奶</option>
-          <option value="fruit">吃水果</option>
-          <option value="cake">吃蛋糕</option>
-          <option value="sleep">先睡觉</option>
+          <option value="0">"我最近也不太宽裕……"然后话题就自然结束了</option>
+          <option value="1">给了，心里默默记下来了</option>
+          <option value="2">给了，顺手要了它的联系方式</option>
+          <option value="3">给了，还多塞了50，说不用还</option>
         </select>
-        <span class="error" id="snackChoiceError"></span>
+        <span class="error" id="q3Error"></span>
 
-        <button class="btn primary full" type="submit">生成我的奶龙</button>
+        <label for="q4">奶龙盯着你，认真地问"你喜欢我吗"</label>
+        <select id="q4" name="q4">
+          <option value="">请选择</option>
+          <option value="0">"……还行吧"，然后低头看了半天鞋</option>
+          <option value="1">点了点头，但没出声</option>
+          <option value="2">"喜欢！"说完找了个借口先走了</option>
+          <option value="3">当场表白，感情这种事要勇敢</option>
+        </select>
+        <span class="error" id="q4Error"></span>
+
+        <button class="btn primary full" type="submit">测出我的奶龙</button>
       </form>
     </section>
 
     <aside class="test-result glass" id="testResult">
       <img id="testResultImage" src="https://image.hakimi.uno/images/photos/奶/图片00001.jpg" alt="测试结果奶龙">
       <h3 id="testResultTitle">等待生成</h3>
+      <p id="testResultDesc" style="font-size:14px;color:#667085;margin:6px 4px 0;line-height:1.6;"></p>
     </aside>
   </main>
 

@@ -39,6 +39,7 @@ async function fetchAllMaterials() {
 
   } catch (error) {
     console.error("加载素材失败:", error);
+    hideLoadingMask();
     alert("素材库加载失败，请检查网络或 Nginx 配置。");
   }
 }
@@ -60,6 +61,7 @@ function initDynamicModules() {
     }
   }
 
+  hideLoadingMask();
   showCurrentUser();
   initLoginForm();
   initPersonalityForm();
@@ -74,8 +76,9 @@ function initDynamicModules() {
 
 // ===== 页面加载入口 =====
 document.addEventListener("DOMContentLoaded", function () {
-  // 先拉取数据，数据回来后会自动调用 initDynamicModules
+  showLoadingMask();
   fetchAllMaterials();
+  initFloatAd();
 });
 
 var categoryState = {
@@ -111,13 +114,25 @@ function initLoginForm() {
   form.onsubmit = function (event) {
     event.preventDefault();
     var username = document.getElementById("username").value.trim();
+    var password = document.getElementById("password") ? document.getElementById("password").value : null;
     var pass = true;
 
     setError("usernameError", "");
+    if (password !== null) setError("passwordError", "");
 
     if (username.length < 2 || username.length > 12) {
       setError("usernameError", "昵称需要 2-12 位。");
       pass = false;
+    }
+
+    if (password !== null) {
+      if (password.length < 6 || password.length > 20) {
+        setError("passwordError", "密码需要 6-20 位。");
+        pass = false;
+      } else if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+        setError("passwordError", "密码需同时包含字母和数字。");
+        pass = false;
+      }
     }
 
     if (pass) {
@@ -129,7 +144,25 @@ function initLoginForm() {
   };
 }
 
-// ===== 人格测试页：表单验证后随机抽一张奶龙照片 =====
+// ===== 人格测试页：根据答题分值判断奶龙类型 =====
+var personalityTypes = [
+  {
+    name: "社恐奶龙",
+    desc: "你不是不喜欢奶龙，你只是喜欢在心里喜欢。遇见奶龙你会假装没看见，但回家后会在脑子里把那段相遇回放七八次。你的情感储量其实很充足，只是出口很窄。奶龙如果会读心术，一定会被你感动哭的——可惜它不会。",
+    groupIndex: 2
+  },
+  {
+    name: "淡定奶龙",
+    desc: "你和奶龙之间有种心照不宣的默契：你知道它好，它也知道你知道，但你们都不急着挑明。遇事先录视频，见面先存备注，这不是冷漠，这是成熟。奶龙私下跟别人说，这个人是真的靠谱。",
+    groupIndex: 1
+  },
+  {
+    name: "社牛奶龙",
+    desc: "奶龙还没搞清楚状况，你已经把它拉进三个群了。你的世界里没有陌生的奶龙，只有还没熟的奶龙。这种能量很稀缺，奶龙宇宙需要你——但偶尔也记得给奶龙留点喘息的空间，它是真的有点跟不上。",
+    groupIndex: 0
+  }
+];
+
 function initPersonalityForm() {
   var form = document.getElementById("personalityForm");
   if (!form) {
@@ -139,50 +172,48 @@ function initPersonalityForm() {
   form.onsubmit = function (event) {
     event.preventDefault();
     var name = document.getElementById("testName").value.trim();
-    var mood = document.getElementById("moodChoice").value;
-    var color = document.getElementById("colorChoice").value;
-    var snack = document.getElementById("snackChoice").value;
+    var q1 = document.getElementById("q1").value;
+    var q2 = document.getElementById("q2").value;
+    var q3 = document.getElementById("q3").value;
+    var q4 = document.getElementById("q4").value;
     var pass = true;
 
     setError("testNameError", "");
-    setError("moodChoiceError", "");
-    setError("colorChoiceError", "");
-    setError("snackChoiceError", "");
+    setError("q1Error", "");
+    setError("q2Error", "");
+    setError("q3Error", "");
+    setError("q4Error", "");
 
     if (name === "") {
       setError("testNameError", "先给自己取个昵称。");
       pass = false;
     }
+    if (q1 === "") { setError("q1Error", "这题不能跳过。"); pass = false; }
+    if (q2 === "") { setError("q2Error", "这题不能跳过。"); pass = false; }
+    if (q3 === "") { setError("q3Error", "这题不能跳过。"); pass = false; }
+    if (q4 === "") { setError("q4Error", "这题不能跳过。"); pass = false; }
 
-    if (mood === "") {
-      setError("moodChoiceError", "请选择今天的状态。");
-      pass = false;
-    }
+    if (!pass) return;
 
-    if (color === "") {
-      setError("colorChoiceError", "请选择一个颜色。");
-      pass = false;
-    }
+    var score = parseInt(q1) + parseInt(q2) + parseInt(q3) + parseInt(q4);
+    var typeIndex = score <= 4 ? 0 : score <= 8 ? 1 : 2;
+    var type = personalityTypes[typeIndex];
+    var group = materialGroups[type.groupIndex];
 
-    if (snack === "") {
-      setError("snackChoiceError", "请选择一个场景。");
-      pass = false;
-    }
+    if (!group || group.files.length === 0) return;
 
-    if (pass) {
-      localStorage.setItem("nailongUser", name);
-      showCurrentUser();
-      var groupIndex = Math.floor(Math.random() * 3);
-      var group = materialGroups[groupIndex];
-      var fileIndex = Math.floor(Math.random() * group.files.length);
-      var file = group.files[fileIndex];
-      var number = fileIndex + 1;
-      var title = group.titlePrefix + " " + (number < 10 ? "0" + number : number);
+    // 用分值决定取哪张图，同分同结果
+    var fileIndex = score % group.files.length;
+    var file = group.files[fileIndex];
 
-      document.getElementById("testResultImage").src = group.folder + file;
-      document.getElementById("testResultImage").alt = title;
-      document.getElementById("testResultTitle").textContent = name + "，你是这个奶龙";
-    }
+    localStorage.setItem("nailongUser", name);
+    showCurrentUser();
+
+    document.getElementById("testResultImage").src = group.folder + file;
+    document.getElementById("testResultImage").alt = type.name;
+    document.getElementById("testResultTitle").textContent = name + " 是" + type.name;
+    var desc = document.getElementById("testResultDesc");
+    if (desc) desc.innerHTML = type.desc + '<br><span style="display:inline-block;margin-top:10px;font-size:13px;color:#aaa;">奶龙指数 ' + score + ' / 12</span>';
   };
 }
 
@@ -549,7 +580,7 @@ function renderCategoryItems() {
   initDragAndDrop();
 }
 
-// ===== 分类页：点击素材卡片时加入收藏 =====
+// ===== 分类页：点击素材卡片时加入收藏，双击预览大图 =====
 function initCardOpen() {
   var cards = document.querySelectorAll(".feature-card");
   for (var i = 0; i < cards.length; i++) {
@@ -562,9 +593,17 @@ function initCardOpen() {
         renderFavoriteList();
       }
     };
+    cards[i].ondblclick = function (e) {
+      e.stopPropagation();
+      var img = this.querySelector("img");
+      if (img) openLightbox(img.src, this.getAttribute("data-title"));
+    };
     cards[i].onkeydown = function (event) {
-      if (event.key === "Enter") {
-        this.click();
+      if (event.key === "Enter") this.click();
+      if (event.key === " ") {
+        event.preventDefault();
+        var img = this.querySelector("img");
+        if (img) openLightbox(img.src, this.getAttribute("data-title"));
       }
     };
   }
@@ -782,6 +821,67 @@ function addFavorite(category, file, title) {
     });
     saveFavorites(list);
   }
+}
+
+// ===== 加载遮罩 =====
+var loadingMaskEl = null;
+
+function showLoadingMask() {
+  if (loadingMaskEl) return;
+  loadingMaskEl = document.createElement("div");
+  loadingMaskEl.className = "loading-mask";
+  loadingMaskEl.innerHTML = '<div class="loading-spinner"></div><p>素材加载中…</p>';
+  document.body.appendChild(loadingMaskEl);
+}
+
+function hideLoadingMask() {
+  if (!loadingMaskEl) return;
+  loadingMaskEl.classList.add("hide");
+  setTimeout(function () {
+    if (loadingMaskEl && loadingMaskEl.parentNode) {
+      loadingMaskEl.parentNode.removeChild(loadingMaskEl);
+      loadingMaskEl = null;
+    }
+  }, 380);
+}
+
+// ===== 浮动提醒关闭 =====
+function initFloatAd() {
+  var ad = document.getElementById("floatAd");
+  var btn = document.getElementById("floatClose");
+  if (!ad || !btn) return;
+  btn.onclick = function () {
+    ad.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+    ad.style.opacity = "0";
+    ad.style.transform = "translateY(16px)";
+    setTimeout(function () {
+      if (ad.parentNode) ad.parentNode.removeChild(ad);
+    }, 320);
+  };
+}
+
+// ===== 图片灯箱 =====
+function openLightbox(src, alt) {
+  var box = document.createElement("div");
+  box.className = "lightbox";
+  box.innerHTML =
+    '<button class="lightbox-close" type="button" aria-label="关闭">×</button>' +
+    '<img src="' + src + '" alt="' + (alt || "") + '">';
+
+  function close() {
+    if (box.parentNode) box.parentNode.removeChild(box);
+    document.removeEventListener("keydown", onKey);
+  }
+
+  function onKey(e) {
+    if (e.key === "Escape") close();
+  }
+
+  box.onclick = function (e) {
+    if (e.target === box || e.target.className === "lightbox-close") close();
+  };
+  document.addEventListener("keydown", onKey);
+  document.body.appendChild(box);
 }
 
 // ===== 收藏篮：显示收藏项，并支持单个删除 =====
