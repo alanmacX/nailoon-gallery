@@ -16,9 +16,18 @@ var bannerSlides = [];   // 动态生成的轮播图
 async function fetchAllMaterials() {
   try {
     const promises = materialConfig.map(async (cfg) => {
-      const response = await fetch(BASE_URL + cfg.path);
-      if (!response.ok) throw new Error("无法访问 " + cfg.path);
-      const json = await response.json();
+      var listUrl = new URL(cfg.path, BASE_URL).href;
+      const response = await fetch(listUrl, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error("无法访问 " + cfg.path + " (" + response.status + ")");
+      }
+
+      let json;
+      try {
+        json = await response.json();
+      } catch (parseError) {
+        throw new Error("目录列表不是 JSON: " + cfg.path);
+      }
 
       return {
         category: cfg.category,
