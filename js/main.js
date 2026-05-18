@@ -147,6 +147,8 @@ var quizQuestions = [
 var quizCurrent = 0;
 var quizAnswers = [];
 var quizTimers = [];
+var quizIntervals = [];
+var quizBusy = false;
 
 function initPersonalityForm() {
   var startBtn = document.getElementById("quizStartBtn");
@@ -162,11 +164,13 @@ function initPersonalityForm() {
   };
 
   document.getElementById("quizPrev").onclick = function () {
+    if (quizBusy) return;
     quizCleanEffects();
     if (quizCurrent > 0) { quizCurrent--; renderQuiz(); }
   };
 
   document.getElementById("quizNext").onclick = function () {
+    if (quizBusy) return;
     quizCleanEffects();
     if (quizCurrent < quizQuestions.length - 1) {
       quizCurrent++;
@@ -226,6 +230,7 @@ function renderQuiz() {
 }
 
 function quizPick() {
+  if (quizBusy) return;
   var idx = parseInt(this.getAttribute("data-idx"));
   quizAnswers[quizCurrent] = idx;
 
@@ -237,18 +242,21 @@ function quizPick() {
 
   // 第3题：选完触发黑屏打字
   if (quizCurrent === 2) {
-    quizTypeOnBlack(idx < 2 ? "它注意到你了 ^^" : "别装作看不见", 4);
+    quizLock();
+    quizTypeOnBlack(idx < 2 ? "它注意到你了 ^^" : "别装作看不见", 3);
     return;
   }
 
   // 第7题：选完全屏变红 + 漂浮文字
   if (quizCurrent === 6) {
+    quizLock();
     quizRedFlood();
     return;
   }
 
   // 第8题：漂浮"在看你"
   if (quizCurrent === 7) {
+    quizLock();
     quizPeepEffect();
     return;
   }
@@ -265,13 +273,31 @@ function quizPick() {
   }
 }
 
+// 特效播放时锁住所有交互
+function quizLock() {
+  quizBusy = true;
+  document.getElementById("quizPrev").disabled = true;
+  document.getElementById("quizNext").disabled = true;
+}
+
+function quizUnlock() {
+  quizBusy = false;
+  document.getElementById("quizPrev").disabled = quizCurrent === 0;
+  document.getElementById("quizNext").disabled = false;
+}
+
 // 清理所有特效残留
 function quizCleanEffects() {
   for (var i = 0; i < quizTimers.length; i++) clearTimeout(quizTimers[i]);
+  for (var k = 0; k < quizIntervals.length; k++) clearInterval(quizIntervals[k]);
   quizTimers = [];
+  quizIntervals = [];
   var junk = document.querySelectorAll(".scare-mask,.scare-float,.scare-gray,.scare-flood");
   for (var j = 0; j < junk.length; j++) junk[j].remove();
   document.body.style.background = "";
+  var card = document.querySelector(".quiz-card");
+  if (card) card.style.opacity = "1";
+  quizBusy = false;
 }
 
 // 延迟执行（会被切题时清理掉）
@@ -331,6 +357,7 @@ function quizTypeOnBlack(text, nextIdx) {
           clearInterval(shuffle);
           mask.remove();
           quizCurrent = nextIdx;
+          quizUnlock();
           renderQuiz();
         }, 500));
       }, 1200));
@@ -350,59 +377,77 @@ function quizBlackFlash(text, duration) {
   quizTimers.push(setTimeout(function () { mask.remove(); }, duration));
 }
 
-// 全屏红 + 漂浮文字爆发
+// 全屏红 + 漂浮文字爆发（限制最多40个元素）
 function quizRedFlood() {
   document.body.style.background = "#c00";
   var card = document.querySelector(".quiz-card");
   card.style.opacity = "0";
 
   var phrases = ["在看你", "别跑", "就在你后面", "嘿嘿", "奶龙", "找到你了"];
-  var created = [];
+  var pool = [];
+  var max = 40;
+
   var t = setInterval(function () {
-    for (var i = 0; i < 8; i++) {
-      var el = document.createElement("div");
-      el.className = "scare-float";
+    for (var i = 0; i < 3; i++) {
+      var el;
+      if (pool.length >= max) {
+        el = pool[Math.floor(Math.random() * pool.length)];
+      } else {
+        el = document.createElement("div");
+        el.className = "scare-float";
+        document.body.appendChild(el);
+        pool.push(el);
+      }
       el.textContent = phrases[Math.floor(Math.random() * phrases.length)];
       el.style.left = Math.random() * 100 + "vw";
       el.style.top = Math.random() * 100 + "vh";
       el.style.fontSize = (12 + Math.random() * 14) + "px";
-      el.style.opacity = (0.15 + Math.random() * 0.2).toString();
-      document.body.appendChild(el);
-      created.push(el);
     }
-  }, 150);
+  }, 300);
+  quizIntervals.push(t);
 
   quizTimers.push(setTimeout(function () {
     clearInterval(t);
-    for (var j = 0; j < created.length; j++) created[j].remove();
+    for (var j = 0; j < pool.length; j++) pool[j].remove();
     document.body.style.background = "";
     card.style.opacity = "1";
+    quizUnlock();
   }, 4000));
 }
 
-// 满屏"在看你"飘字
+// 满屏"在看你"飘字（限制最多50个元素）
 function quizPeepEffect() {
   var gray = document.createElement("div");
   gray.className = "scare-gray";
   document.body.appendChild(gray);
 
   var words = ["在看你", "就在身边", "回头看看", "别走", "嘿", "奶龙在这里"];
-  var created = [gray];
+  var pool = [];
+  var max = 50;
+
   var t = setInterval(function () {
-    for (var i = 0; i < 12; i++) {
-      var el = document.createElement("div");
-      el.className = "scare-float";
+    for (var i = 0; i < 4; i++) {
+      var el;
+      if (pool.length >= max) {
+        el = pool[Math.floor(Math.random() * pool.length)];
+      } else {
+        el = document.createElement("div");
+        el.className = "scare-float";
+        document.body.appendChild(el);
+        pool.push(el);
+      }
       el.textContent = words[Math.floor(Math.random() * words.length)];
       el.style.left = Math.random() * 100 + "vw";
       el.style.top = Math.random() * 100 + "vh";
-      document.body.appendChild(el);
-      created.push(el);
     }
-  }, 120);
+  }, 250);
+  quizIntervals.push(t);
 
   quizTimers.push(setTimeout(function () {
     clearInterval(t);
-    for (var j = 0; j < created.length; j++) created[j].remove();
+    gray.remove();
+    for (var j = 0; j < pool.length; j++) pool[j].remove();
+    quizUnlock();
   }, 4500));
 }
 
