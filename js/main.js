@@ -149,6 +149,7 @@ var quizAnswers = [];
 var quizTimers = [];
 var quizIntervals = [];
 var quizBusy = false;
+var quizFloatLimit = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 720px)").matches ? 60 : 120;
 
 function initPersonalityForm() {
   var startBtn = document.getElementById("quizStartBtn");
@@ -195,6 +196,8 @@ function initPersonalityForm() {
       quizShowResult();
     };
   }
+
+  window.addEventListener("beforeunload", quizCleanEffects);
 }
 
 function renderQuiz() {
@@ -383,9 +386,11 @@ function quizBlackFlash(text, duration) {
   quizTimers.push(setTimeout(function () { mask.remove(); }, duration));
 }
 
-// 生成一批带2s生命周期的漂浮文字，保持总数在max
-function quizSpawnFloats(phrases, max) {
-  var alive = 0;
+// 分批生成少量漂浮文字，避免一次性创建过多 DOM 节点卡住页面
+function quizSpawnFloats(phrases, max, duration) {
+  var total = Math.min(max, quizFloatLimit);
+  var created = 0;
+  var batchSize = 8;
 
   function spawn(initialDelay) {
     var el = document.createElement("div");
@@ -398,30 +403,55 @@ function quizSpawnFloats(phrases, max) {
       el.style.animationDelay = "-" + (Math.random() * 1.8).toFixed(2) + "s";
     }
     document.body.appendChild(el);
-    alive++;
     el.addEventListener("animationend", function () {
       el.remove();
-      alive--;
     });
   }
 
-  for (var i = 0; i < max; i++) spawn(true);
-
   var t = setInterval(function () {
-    var need = max - alive;
-    for (var j = 0; j < need; j++) spawn(false);
-  }, 300);
+    for (var j = 0; j < batchSize && created < total; j++) {
+      spawn(created < total / 2);
+      created++;
+    }
+    if (created >= total) clearInterval(t);
+  }, 80);
   quizIntervals.push(t);
+
+  quizTimers.push(setTimeout(function () {
+    clearInterval(t);
+    var floats = document.querySelectorAll(".scare-float");
+    for (var i = 0; i < floats.length; i++) floats[i].remove();
+    quizUnlock();
+  }, duration || 2600));
+}
+
+function quizRestoreCard() {
+  document.body.style.background = "";
+  var card = document.querySelector(".quiz-card");
+  if (card) card.style.opacity = "1";
+}
+
+function quizClearGrayOverlay() {
+  var grays = document.querySelectorAll(".scare-gray");
+  for (var i = 0; i < grays.length; i++) grays[i].remove();
+}
+
+function quizEndTimedEffect(duration) {
+  quizTimers.push(setTimeout(function () {
+    quizClearGrayOverlay();
+    quizRestoreCard();
+  }, duration || 2600));
 }
 
 // 全屏红 + 漂浮文字爆发
 function quizRedFlood() {
   document.body.style.background = "#c00";
   var card = document.querySelector(".quiz-card");
-  card.style.opacity = "0";
+  if (card) card.style.opacity = "0";
 
   var phrases = ["在看你", "别跑", "就在你后面", "嘿嘿", "奶龙", "找到你了"];
-  quizSpawnFloats(phrases, 1000);
+  quizSpawnFloats(phrases, 120, 2600);
+  quizEndTimedEffect(2600);
 }
 
 // 满屏"在看你"飘字
@@ -431,11 +461,13 @@ function quizPeepEffect() {
   document.body.appendChild(gray);
 
   var words = ["在看你", "就在身边", "回头看看", "别走", "嘿", "奶龙在这里"];
-  quizSpawnFloats(words, 1000);
+  quizSpawnFloats(words, 120, 2600);
+  quizEndTimedEffect(2600);
 }
 
 // 答完所有题
 function quizFinish() {
+  quizCleanEffects();
   document.getElementById("quizBox").style.display = "none";
 
   // 黑屏填满"奶龙"
@@ -446,10 +478,10 @@ function quizFinish() {
   flood.textContent = fill;
   document.body.appendChild(flood);
 
-  setTimeout(function () {
+  quizTimers.push(setTimeout(function () {
     flood.remove();
     document.getElementById("quizUnlock").style.display = "grid";
-  }, 2500);
+  }, 2500));
 }
 
 // 展示结果奶龙
