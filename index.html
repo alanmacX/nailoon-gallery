@@ -18,7 +18,7 @@
     <nav class="nav">
       <a class="active" href="index.html">首页</a>
       <a href="category.html">分类</a>
-      <a href="detail.html">收藏</a>
+      <a href="collection.html">收藏</a>
       <a href="word.html">奶龙组词</a>
       <a href="contact.html">测试</a>
       <a href="smile.html">大笑</a>
@@ -60,7 +60,7 @@
       <div class="main-column">
         <section class="panel glass">
           <div class="section-title">
-            <h2>今日推荐</h2>
+            <h2>分类推荐</h2>
           </div>
           <div class="card-grid">
             <article class="feature-card gallery-card" draggable="true" data-title="奶龙素材 03" data-category="nai"
@@ -89,29 +89,28 @@
           <button class="btn secondary clear-favorites" id="clearFavorites" type="button">一键清空</button>
           <ul id="favoriteList" class="favorite-list"></ul>
         </section>
-        <section class="panel">
-          <h2>素材占比图</h2>
-          <canvas id="moodCanvas" width="320" height="220">您的浏览器不支持 Canvas。</canvas>
-        </section>
       </aside>
     </section>
   </main>
+  <div id="floatAd" class="float-ad glass">
+    <button id="closeFloatAd" class="float-ad-close" type="button">&times;</button>
+    <a href="contact.html">
+      <img src="https://image.hakimi.uno/images/photos/奶/图片00001.jpg" alt="测测你是哪只奶龙">
+      <span>测测你是哪只奶龙 →</span>
+    </a>
+  </div>
+
   <footer class="site-footer">
     <p>© 2026 奶龙素材馆</p>
     <div class="share-links">
       <a href="category.html">分类展示</a>
+      <a href="collection.html">收藏画廊</a>
       <a href="word.html">奶龙组词</a>
       <a href="contact.html">人格测试</a>
       <a href="smile.html">大笑视频</a>
       <a href="login.html">用户登录</a>
     </div>
   </footer>
-
-  <div class="float-ad" id="floatAd">
-    <button class="float-close" id="floatClose" type="button" aria-label="关闭">×</button>
-    <p>奶气系列刚刚更新，快来看看有没有你喜欢的！</p>
-    <a class="btn primary" href="category.html" style="font-size:14px;min-height:36px;padding:0 14px;">去分类页</a>
-  </div>
 
   <script src="js/main.js?v=1.0.5"></script>
 </body>

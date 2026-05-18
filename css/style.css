@@ -832,143 +832,206 @@ textarea:focus {
   border: 1px solid var(--line);
 }
 
-/* ===== 浮动提醒 ===== */
+/* ===== 恐怖问卷 ===== */
+.quiz-intro,
+.quiz-box,
+.quiz-unlock,
+.quiz-result {
+  min-height: calc(100vh - 88px);
+  display: grid;
+  place-items: center;
+  width: min(560px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 44px 0;
+}
+
+.quiz-card {
+  width: 100%;
+  padding: 30px;
+}
+
+.quiz-warn {
+  color: #d92d20;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.quiz-progress {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.quiz-question {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.6;
+  min-height: 48px;
+  margin-bottom: 18px;
+}
+
+.quiz-options {
+  display: grid;
+  gap: 10px;
+}
+
+.quiz-opt {
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.quiz-opt:hover {
+  background: rgba(255, 212, 71, 0.2);
+}
+
+.quiz-opt.picked {
+  background: rgba(255, 212, 71, 0.35);
+  border-color: var(--yellow);
+}
+
+.quiz-opt.locked {
+  background: #f2f2f2;
+  color: #999;
+  cursor: not-allowed;
+  pointer-events: none;
+  border-color: #eee;
+}
+
+.quiz-btns {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 18px;
+  gap: 12px;
+}
+
+.quiz-btns .btn {
+  flex: 1;
+  max-width: 140px;
+}
+
+/* 恐怖遮罩 */
+.scare-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.scare-mask.black {
+  background: #000;
+}
+
+.scare-mask.red {
+  background: #c00;
+}
+
+.scare-typing {
+  color: #d80000;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 4px;
+}
+
+/* 漂浮文字 */
+.scare-float {
+  position: fixed;
+  color: #d80000;
+  opacity: 0.2;
+  font-size: 15px;
+  font-weight: 700;
+  pointer-events: none;
+  z-index: 9998;
+  white-space: nowrap;
+  animation: floatPulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes floatPulse {
+  from { opacity: 0.1; }
+  to { opacity: 0.25; }
+}
+
+.scare-gray {
+  position: fixed;
+  inset: 0;
+  background: rgba(60, 60, 60, 0.25);
+  pointer-events: none;
+  z-index: 9997;
+}
+
+/* 全屏填字 */
+.scare-flood {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;
+  padding: 20px;
+  font-size: 20px;
+  color: #ff0000;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow: hidden;
+}
+
+/* ===== 浮动广告 ===== */
 .float-ad {
   position: fixed;
   right: 22px;
   bottom: 28px;
-  z-index: 999;
-  width: 220px;
-  padding: 18px 18px 16px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(255, 212, 71, 0.6);
-  box-shadow: 0 12px 38px rgba(17, 24, 39, 0.16);
+  z-index: 50;
+  width: 180px;
+  padding: 10px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(8px);
-  animation: floatIn 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 12px 36px rgba(17, 24, 39, 0.15);
+  transition: opacity 0.3s ease;
 }
 
-.float-ad p {
-  margin: 0 0 12px;
-  font-size: 14px;
-  line-height: 1.5;
+.float-ad a {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--text);
 }
 
-.float-close {
+.float-ad img {
+  width: 100%;
+  border-radius: 14px;
+}
+
+.float-ad-close {
   position: absolute;
-  right: 12px;
-  top: 10px;
-  width: 24px;
-  height: 24px;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  font-size: 17px;
-  color: var(--muted);
+  top: -8px;
+  right: -8px;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--white);
+  font-size: 16px;
   line-height: 1;
-  padding: 0;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.float-close:hover {
-  background: rgba(17, 24, 39, 0.08);
-}
-
-@keyframes floatIn {
-  from { opacity: 0; transform: translateY(22px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ===== 全局加载遮罩 ===== */
-.loading-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 9000;
-  background: rgba(247, 249, 251, 0.88);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  backdrop-filter: blur(4px);
-  transition: opacity 0.35s ease;
-}
-
-.loading-mask.hide {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.loading-spinner {
-  width: 46px;
-  height: 46px;
-  border: 4px solid rgba(255, 212, 71, 0.3);
-  border-top-color: var(--yellow);
-  border-radius: 50%;
-  animation: spin 0.75s linear infinite;
-}
-
-.loading-mask p {
-  margin: 0;
-  font-size: 15px;
-  color: var(--muted);
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ===== 图片灯箱 ===== */
-.lightbox {
-  position: fixed;
-  inset: 0;
-  z-index: 8000;
-  background: rgba(17, 24, 39, 0.72);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: zoom-out;
-  backdrop-filter: blur(6px);
-  animation: lbIn 0.22s ease;
-}
-
-.lightbox img {
-  max-width: min(90vw, 680px);
-  max-height: 86vh;
-  object-fit: contain;
-  border-radius: 20px;
-  box-shadow: 0 32px 80px rgba(17, 24, 39, 0.38);
-  cursor: default;
-}
-
-.lightbox-close {
-  position: absolute;
-  top: 22px;
-  right: 26px;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-  font-size: 22px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.lightbox-close:hover {
-  background: rgba(255, 255, 255, 0.28);
-}
-
-@keyframes lbIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+.float-ad-close:hover {
+  background: var(--coral);
+  color: var(--white);
 }
 
 /* ===== 响应式布局：平板和手机 ===== */
@@ -1032,5 +1095,9 @@ textarea:focus {
     right: 11px;
     bottom: 12px;
     width: auto;
+  }
+
+  .float-ad img {
+    display: none;
   }
 }

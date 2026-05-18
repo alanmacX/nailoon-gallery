@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>奶龙素材馆 | 分类展示</title>
+  <title>奶龙素材馆 | 收藏</title>
   <link rel="icon" href="https://image.hakimi.uno/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -17,8 +17,9 @@
     </a>
     <nav class="nav">
       <a href="index.html">首页</a>
-      <a class="active" href="category.html">分类</a>
-      <a href="collection.html">收藏</a>
+      <a href="category.html">分类</a>
+      <a href="detail.html">详情</a>
+      <a class="active" href="collection.html">收藏</a>
       <a href="word.html">奶龙组词</a>
       <a href="contact.html">测试</a>
       <a href="smile.html">大笑</a>
@@ -29,26 +30,14 @@
 
   <main class="section-shell page-main">
     <section class="page-head">
-      <h1>奶龙素材分类</h1>
-      <div id="categoryTabs" class="category-tabs" aria-label="分类筛选"></div>
+      <h1>我的收藏画廊</h1>
+      <a class="btn primary" href="category.html">去分类页收藏</a>
     </section>
-
-    <section class="category-layout">
-      <div>
-        <div id="categoryGrid" class="card-grid category-grid"></div>
-        <div id="pagination" class="pagination" aria-label="分页导航"></div>
-      </div>
-      <aside class="panel drop-panel">
-        <h2>我的收藏篮</h2>
-        <div id="dropZone" class="drop-zone">拖到这里收藏</div>
-        <button class="btn secondary clear-favorites" id="clearFavorites" type="button">一键清空</button>
-        <ul id="favoriteList" class="favorite-list"></ul>
-      </aside>
-    </section>
+    <section id="collectionGrid" class="fridge-board"></section>
   </main>
 
   <footer class="site-footer">
-    <p>© 2026 奶龙素材馆 | 分类展示子页面</p>
+    <p>© 2026 奶龙素材馆 | 收藏展示页面</p>
   </footer>
 
   <script src="js/main.js?v=1.0.5"></script>

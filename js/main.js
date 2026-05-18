@@ -1,775 +1,697 @@
-// ===== 基础配置：定义目录映射关系 =====
-const materialConfig = [
-  { category: "nai", name: "奶", prefix: "奶龙素材", path: "/images/photos/奶/" },
-  { category: "naiguo", name: "奶果", prefix: "奶果素材", path: "/images/photos/奶果/" },
-  { category: "naiqi", name: "奶气", prefix: "奶气素材", path: "/images/photos/奶气/" },
-  { category: "gifs", name: "动态表情", prefix: "动态表情", path: "/images/gifs/" },
+// 图床地址和素材分类配置
+var BASE_URL = "https://image.hakimi.uno";
+var materialGroups = [];
+var bannerSlides = [];
+
+var materialConfig = [
+  { category: "nai",     name: "奶",     prefix: "奶龙素材", path: "/images/photos/奶/" },
+  { category: "naiguo",  name: "奶果",   prefix: "奶果素材", path: "/images/photos/奶果/" },
+  { category: "naiqi",   name: "奶气",   prefix: "奶气素材", path: "/images/photos/奶气/" },
+  { category: "gifs",    name: "动态表情", prefix: "动态表情", path: "/images/gifs/" },
   { category: "letters", name: "奶龙字母", prefix: "字母素材", path: "/images/奶龙字母/" },
-  { category: "stickers", name: "表情包", prefix: "表情包", path: "/images/表情包/" }
+  { category: "stickers",name: "表情包",  prefix: "表情包",   path: "/images/表情包/" }
 ];
 
-const BASE_URL = "https://image.hakimi.uno";
-var materialGroups = []; // 动态填充后的全局变量
-var bannerSlides = [];   // 动态生成的轮播图
+// 分类页状态
+var curCategory = "all";
+var curPage = 1;
+var pageSize = 9;
 
-// ===== 核心：异步获取所有资源列表 =====
+// 页面加载后先拉取所有素材列表
+document.addEventListener("DOMContentLoaded", function () {
+  fetchAllMaterials();
+});
+
+// 向图床发请求，拿到每个分类的文件列表
 async function fetchAllMaterials() {
   try {
-    const promises = materialConfig.map(async (cfg) => {
-      var listUrl = new URL(cfg.path, BASE_URL).href;
-      const response = await fetch(listUrl, { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error("无法访问 " + cfg.path + " (" + response.status + ")");
-      }
-
-      let json;
-      try {
-        json = await response.json();
-      } catch (parseError) {
-        throw new Error("目录列表不是 JSON: " + cfg.path);
-      }
-
+    var promises = materialConfig.map(async function (cfg) {
+      var res = await fetch(BASE_URL + cfg.path);
+      var json = await res.json();
       return {
         category: cfg.category,
         categoryName: cfg.name,
         titlePrefix: cfg.prefix,
         folder: BASE_URL + cfg.path,
-        // 过滤文件，只保留图片
         files: json
-          .filter(f => f.type === 'file' && /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name))
-          .map(f => f.name)
+          .filter(function (f) {
+            return f.type === "file" && /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name);
+          })
+          .map(function (f) { return f.name; })
       };
     });
-
     materialGroups = await Promise.all(promises);
-
-    // 数据准备好后，初始化依赖数据的模块
-    initDynamicModules();
-
-  } catch (error) {
-    console.error("加载素材失败:", error);
-    hideLoadingMask();
-    alert("素材库加载失败，请检查网络或 Nginx 配置。");
+    initAll();
+  } catch (e) {
+    console.error("素材加载失败:", e);
   }
 }
 
-// ===== 初始化依赖数据的模块 =====
-function initDynamicModules() {
-  // 1. 生成轮播图数据 (原逻辑：从第 4 个分类 gifs 中随机抽 3 张)
-  var time = new Date().getTime();
-  var gifGroup = materialGroups[3]; // gifs 所在的索引
-  if (gifGroup && gifGroup.files.length > 0) {
-    while (bannerSlides.length < 3 && gifGroup.files.length >= 3) {
-      var fileIndex = Math.floor(Math.random() * gifGroup.files.length);
-      var file = gifGroup.files[fileIndex] + "?t=" + time;
-      var fullSrc = gifGroup.folder + file;
-
-      if (!bannerSlides.some(s => s.src === fullSrc)) {
-        bannerSlides.push({ src: fullSrc, alt: gifGroup.categoryName });
+// 数据加载完后初始化各模块
+function initAll() {
+  // 从 gifs 分类随机抽 3 张做轮播
+  var gifGroup = materialGroups[3];
+  if (gifGroup && gifGroup.files.length >= 3) {
+    var t = new Date().getTime();
+    while (bannerSlides.length < 3) {
+      var idx = Math.floor(Math.random() * gifGroup.files.length);
+      var src = gifGroup.folder + gifGroup.files[idx] + "?t=" + t;
+      if (!bannerSlides.some(function (s) { return s.src === src; })) {
+        bannerSlides.push({ src: src, alt: "动态表情" });
       }
     }
   }
 
-  hideLoadingMask();
   showCurrentUser();
   initLoginForm();
   initPersonalityForm();
   initWordForm();
   initSlider();
-  initSmileVideo();
-  initCanvas();
   initCollectionPage();
   initCategoryPage();
   initDragAndDrop();
-}
-
-// ===== 页面加载入口 =====
-document.addEventListener("DOMContentLoaded", function () {
-  showLoadingMask();
-  fetchAllMaterials();
+  initSmileVideo();
   initFloatAd();
-});
+  initDetailPage();
+}
 
-var categoryState = {
-  currentCategory: "all",
-  currentPage: 1,
-  pageSize: 9
-};
-
-// ===== 用户状态：读取本地保存的用户名 =====
+// 读取 localStorage 里保存的用户名并显示在导航栏
 function showCurrentUser() {
-  var userSpans = document.querySelectorAll("#currentUser");
-  var username = localStorage.getItem("nailongUser") || "游客";
-  for (var i = 0; i < userSpans.length; i++) {
-    userSpans[i].textContent = username;
-  }
+  var name = localStorage.getItem("nailongUser") || "游客";
+  document.querySelectorAll("#currentUser").forEach(function (el) {
+    el.textContent = name;
+  });
 }
 
-// ===== 表单提示：把错误文字写到指定元素里 =====
-function setError(id, message) {
-  var element = document.getElementById(id);
-  if (element) {
-    element.textContent = message;
-  }
+// 把错误提示写到对应的 span 里
+function setError(id, msg) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = msg;
 }
 
-// ===== 登录页：昵称验证 =====
+// 登录页：验证昵称（2-12位）和密码（至少6位）
 function initLoginForm() {
   var form = document.getElementById("loginForm");
-  if (!form) {
-    return;
-  }
+  if (!form) return;
 
-  form.onsubmit = function (event) {
-    event.preventDefault();
-    var username = document.getElementById("username").value.trim();
-    var password = document.getElementById("password") ? document.getElementById("password").value : null;
-    var pass = true;
+  form.onsubmit = function (e) {
+    e.preventDefault();
+    var name = document.getElementById("username").value.trim();
+    var pwd  = document.getElementById("password").value;
+    var ok   = true;
 
     setError("usernameError", "");
-    if (password !== null) setError("passwordError", "");
+    setError("passwordError", "");
 
-    if (username.length < 2 || username.length > 12) {
+    if (name.length < 2 || name.length > 12) {
       setError("usernameError", "昵称需要 2-12 位。");
-      pass = false;
+      ok = false;
     }
-
-    if (password !== null) {
-      if (password.length < 6 || password.length > 20) {
-        setError("passwordError", "密码需要 6-20 位。");
-        pass = false;
-      } else if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-        setError("passwordError", "密码需同时包含字母和数字。");
-        pass = false;
-      }
+    if (pwd.length < 6) {
+      setError("passwordError", "密码至少需要 6 位。");
+      ok = false;
     }
-
-    if (pass) {
-      localStorage.setItem("nailongUser", username);
+    if (ok) {
+      localStorage.setItem("nailongUser", name);
       showCurrentUser();
-      alert("登录成功，欢迎 " + username + "！");
+      alert("登录成功，欢迎 " + name + "！");
       location.href = "index.html";
     }
   };
 }
 
-// ===== 人格测试页：根据答题分值判断奶龙类型 =====
-var personalityTypes = [
-  {
-    name: "社恐奶龙",
-    desc: "你不是不喜欢奶龙，你只是喜欢在心里喜欢。遇见奶龙你会假装没看见，但回家后会在脑子里把那段相遇回放七八次。你的情感储量其实很充足，只是出口很窄。奶龙如果会读心术，一定会被你感动哭的——可惜它不会。",
-    groupIndex: 2
-  },
-  {
-    name: "淡定奶龙",
-    desc: "你和奶龙之间有种心照不宣的默契：你知道它好，它也知道你知道，但你们都不急着挑明。遇事先录视频，见面先存备注，这不是冷漠，这是成熟。奶龙私下跟别人说，这个人是真的靠谱。",
-    groupIndex: 1
-  },
-  {
-    name: "社牛奶龙",
-    desc: "奶龙还没搞清楚状况，你已经把它拉进三个群了。你的世界里没有陌生的奶龙，只有还没熟的奶龙。这种能量很稀缺，奶龙宇宙需要你——但偶尔也记得给奶龙留点喘息的空间，它是真的有点跟不上。",
-    groupIndex: 0
-  }
+// 恐怖问卷
+var quizQuestions = [
+  { q: "1. 你第一次看到奶龙的时候，是什么感觉？",
+    opt: ["莫名觉得亲切", "有点可爱又有点怪", "说不上来的不安", "完全无感"] },
+  { q: "2. 深夜刷手机的时候，你有没有觉得奶龙的表情包在盯着你看？",
+    opt: ["经常有这种错觉", "偶尔会多想", "从来没有", "越看越觉得它在笑"] },
+  { q: "3. 你有没有感觉，奶龙的眼睛会跟着你的手指移动？",
+    opt: ["好像真的会", "仔细看确实有点", "不可能吧", "我不敢确认"] },
+  { q: "4. 半夜醒来，你觉得房间角落会不会蹲着一只奶龙？",
+    opt: ["经常这么想", "偶尔会怕", "绝对不会", "希望真的有"] },
+  { q: "5. 如果奶龙现在出现在你面前，你第一反应是？",
+    opt: ["抱住它", "后退一步", "大声叫", "一动不动"] },
+  { q: "6. 安静的时候，你有没有听到过奶龙的叫声？",
+    opt: ["好像听到过", "那只是幻觉吧", "从来没有", "不想回答这个问题"] },
+  { q: "7. 奶龙冲你笑的时候，你觉得那个笑容是……",
+    opt: ["天真的", "意味深长的", "让人心里发毛的", "说不清楚"] },
+  { q: "8. 你现在回头看看身后，确定没有奶龙吗？",
+    opt: ["我不敢回头", "看了，没有", "好像有什么东西", "它一直都在"] },
+  { q: "9. 你觉得奶龙一直在等着什么人吗？",
+    opt: ["不知道", "可能吧", "应该不是我", "就是在等我"] },
+  { q: "10. 最后一个问题——你愿意让奶龙永远记住你吗？",
+    opt: ["愿意", "不太确定", "不愿意", "由不得我选吧"] }
 ];
 
+var quizCurrent = 0;
+var quizAnswers = [];
+var quizTimers = [];
+
 function initPersonalityForm() {
-  var form = document.getElementById("personalityForm");
-  if (!form) {
-    return;
-  }
+  var startBtn = document.getElementById("quizStartBtn");
+  if (!startBtn) return;
 
-  form.onsubmit = function (event) {
-    event.preventDefault();
-    var name = document.getElementById("testName").value.trim();
-    var q1 = document.getElementById("q1").value;
-    var q2 = document.getElementById("q2").value;
-    var q3 = document.getElementById("q3").value;
-    var q4 = document.getElementById("q4").value;
-    var pass = true;
+  quizAnswers = new Array(quizQuestions.length).fill(null);
 
-    setError("testNameError", "");
-    setError("q1Error", "");
-    setError("q2Error", "");
-    setError("q3Error", "");
-    setError("q4Error", "");
-
-    if (name === "") {
-      setError("testNameError", "先给自己取个昵称。");
-      pass = false;
-    }
-    if (q1 === "") { setError("q1Error", "这题不能跳过。"); pass = false; }
-    if (q2 === "") { setError("q2Error", "这题不能跳过。"); pass = false; }
-    if (q3 === "") { setError("q3Error", "这题不能跳过。"); pass = false; }
-    if (q4 === "") { setError("q4Error", "这题不能跳过。"); pass = false; }
-
-    if (!pass) return;
-
-    var score = parseInt(q1) + parseInt(q2) + parseInt(q3) + parseInt(q4);
-    var typeIndex = score <= 4 ? 0 : score <= 8 ? 1 : 2;
-    var type = personalityTypes[typeIndex];
-    var group = materialGroups[type.groupIndex];
-
-    if (!group || group.files.length === 0) return;
-
-    // 用分值决定取哪张图，同分同结果
-    var fileIndex = score % group.files.length;
-    var file = group.files[fileIndex];
-
-    localStorage.setItem("nailongUser", name);
-    showCurrentUser();
-
-    document.getElementById("testResultImage").src = group.folder + file;
-    document.getElementById("testResultImage").alt = type.name;
-    document.getElementById("testResultTitle").textContent = name + " 是" + type.name;
-    var desc = document.getElementById("testResultDesc");
-    if (desc) desc.innerHTML = type.desc + '<br><span style="display:inline-block;margin-top:10px;font-size:13px;color:#aaa;">奶龙指数 ' + score + ' / 12</span>';
+  startBtn.onclick = function () {
+    document.getElementById("quizIntro").style.display = "none";
+    document.getElementById("quizBox").style.display = "grid";
+    quizCurrent = 0;
+    renderQuiz();
   };
+
+  document.getElementById("quizPrev").onclick = function () {
+    quizCleanEffects();
+    if (quizCurrent > 0) { quizCurrent--; renderQuiz(); }
+  };
+
+  document.getElementById("quizNext").onclick = function () {
+    quizCleanEffects();
+    if (quizCurrent < quizQuestions.length - 1) {
+      quizCurrent++;
+      renderQuiz();
+    } else {
+      quizFinish();
+    }
+  };
+
+  // 解锁表单验证
+  var unlockForm = document.getElementById("unlockForm");
+  if (unlockForm) {
+    unlockForm.onsubmit = function (e) {
+      e.preventDefault();
+      var val = document.getElementById("unlockInput").value.trim();
+      setError("unlockError", "");
+      if (val !== "奶龙我爱你") {
+        setError("unlockError", "输入不正确，再想想。");
+        // 输错惩罚：短暂黑屏
+        quizBlackFlash("它在看着你", 1500);
+        return;
+      }
+      document.getElementById("quizUnlock").style.display = "none";
+      quizShowResult();
+    };
+  }
 }
 
-// ===== 奶龙组词页：验证输入，只允许 1-15 个英文字母 =====
-function initWordForm() {
-  var form = document.getElementById("wordForm");
-  if (!form) {
+function renderQuiz() {
+  var q = quizQuestions[quizCurrent];
+  document.getElementById("quizProgress").textContent =
+    "第 " + (quizCurrent + 1) + " 题 / 共 " + quizQuestions.length + " 题";
+  document.getElementById("quizQuestion").textContent = q.q;
+
+  var box = document.getElementById("quizOptions");
+  box.innerHTML = "";
+
+  for (var i = 0; i < q.opt.length; i++) {
+    var div = document.createElement("div");
+    div.className = "quiz-opt";
+    div.textContent = q.opt[i];
+    div.setAttribute("data-idx", i);
+    if (quizAnswers[quizCurrent] === i) div.classList.add("picked");
+    div.onclick = quizPick;
+    box.appendChild(div);
+  }
+
+  var prev = document.getElementById("quizPrev");
+  var next = document.getElementById("quizNext");
+  prev.disabled = quizCurrent === 0;
+  next.textContent = quizCurrent === quizQuestions.length - 1 ? "提交问卷" : "下一题";
+
+  // 第4题停留一会儿后选项变字
+  if (quizCurrent === 3) {
+    quizDelayEffect(function () { quizOptionGlitch("奶龙在你身后", 2500); }, 2000);
+  }
+}
+
+function quizPick() {
+  var idx = parseInt(this.getAttribute("data-idx"));
+  quizAnswers[quizCurrent] = idx;
+
+  var opts = document.querySelectorAll(".quiz-opt");
+  for (var i = 0; i < opts.length; i++) {
+    opts[i].classList.remove("picked");
+  }
+  this.classList.add("picked");
+
+  // 第3题：选完触发黑屏打字
+  if (quizCurrent === 2) {
+    quizTypeOnBlack(idx < 2 ? "它注意到你了 ^^" : "别装作看不见", 4);
     return;
   }
 
-  form.onsubmit = function (event) {
-    event.preventDefault();
-    var value = document.getElementById("wordInput").value.trim().toUpperCase();
+  // 第7题：选完全屏变红 + 漂浮文字
+  if (quizCurrent === 6) {
+    quizRedFlood();
+    return;
+  }
+
+  // 第8题：漂浮"在看你"
+  if (quizCurrent === 7) {
+    quizPeepEffect();
+    return;
+  }
+
+  // 第10题：不管选什么，锁死其他选项
+  if (quizCurrent === 9) {
+    var allOpts = document.querySelectorAll(".quiz-opt");
+    for (var j = 0; j < allOpts.length; j++) {
+      if (j !== idx) {
+        allOpts[j].classList.add("locked");
+        allOpts[j].textContent = "你没得选";
+      }
+    }
+  }
+}
+
+// 清理所有特效残留
+function quizCleanEffects() {
+  for (var i = 0; i < quizTimers.length; i++) clearTimeout(quizTimers[i]);
+  quizTimers = [];
+  var junk = document.querySelectorAll(".scare-mask,.scare-float,.scare-gray,.scare-flood");
+  for (var j = 0; j < junk.length; j++) junk[j].remove();
+  document.body.style.background = "";
+}
+
+// 延迟执行（会被切题时清理掉）
+function quizDelayEffect(fn, ms) {
+  quizTimers.push(setTimeout(function () {
+    if (document.getElementById("quizBox").style.display !== "none") fn();
+  }, ms));
+}
+
+// 选项文字闪变
+function quizOptionGlitch(text, duration) {
+  var opts = document.querySelectorAll(".quiz-opt");
+  var saved = [];
+  for (var i = 0; i < opts.length; i++) {
+    saved.push(opts[i].textContent);
+    opts[i].style.pointerEvents = "none";
+  }
+  // 依次变字
+  for (var k = 0; k < opts.length; k++) {
+    (function (el, delay) {
+      quizTimers.push(setTimeout(function () { el.textContent = text; }, delay));
+    })(opts[k], k * 300);
+  }
+  // 恢复
+  quizTimers.push(setTimeout(function () {
+    for (var m = 0; m < opts.length; m++) {
+      opts[m].textContent = saved[m];
+      opts[m].style.pointerEvents = "";
+    }
+  }, duration));
+}
+
+// 黑屏逐字打字
+function quizTypeOnBlack(text, nextIdx) {
+  var mask = document.createElement("div");
+  mask.className = "scare-mask black";
+  var span = document.createElement("span");
+  span.className = "scare-typing";
+  mask.appendChild(span);
+  document.body.appendChild(mask);
+
+  var i = 0;
+  var t = setInterval(function () {
+    if (i < text.length) {
+      span.textContent += text[i];
+      i++;
+    } else {
+      clearInterval(t);
+      quizTimers.push(setTimeout(function () {
+        // 打完后文字乱一下再消失
+        var shuffle = setInterval(function () {
+          span.textContent = text.split("").sort(function () {
+            return Math.random() - 0.5;
+          }).join("");
+        }, 60);
+        quizTimers.push(setTimeout(function () {
+          clearInterval(shuffle);
+          mask.remove();
+          quizCurrent = nextIdx;
+          renderQuiz();
+        }, 500));
+      }, 1200));
+    }
+  }, 90);
+}
+
+// 短暂黑屏闪一句话
+function quizBlackFlash(text, duration) {
+  var mask = document.createElement("div");
+  mask.className = "scare-mask black";
+  var span = document.createElement("span");
+  span.className = "scare-typing";
+  span.textContent = text;
+  mask.appendChild(span);
+  document.body.appendChild(mask);
+  quizTimers.push(setTimeout(function () { mask.remove(); }, duration));
+}
+
+// 全屏红 + 漂浮文字爆发
+function quizRedFlood() {
+  document.body.style.background = "#c00";
+  var card = document.querySelector(".quiz-card");
+  card.style.opacity = "0";
+
+  var phrases = ["在看你", "别跑", "就在你后面", "嘿嘿", "奶龙", "找到你了"];
+  var created = [];
+  var t = setInterval(function () {
+    for (var i = 0; i < 8; i++) {
+      var el = document.createElement("div");
+      el.className = "scare-float";
+      el.textContent = phrases[Math.floor(Math.random() * phrases.length)];
+      el.style.left = Math.random() * 100 + "vw";
+      el.style.top = Math.random() * 100 + "vh";
+      el.style.fontSize = (12 + Math.random() * 14) + "px";
+      el.style.opacity = (0.15 + Math.random() * 0.2).toString();
+      document.body.appendChild(el);
+      created.push(el);
+    }
+  }, 150);
+
+  quizTimers.push(setTimeout(function () {
+    clearInterval(t);
+    for (var j = 0; j < created.length; j++) created[j].remove();
+    document.body.style.background = "";
+    card.style.opacity = "1";
+  }, 4000));
+}
+
+// 满屏"在看你"飘字
+function quizPeepEffect() {
+  var gray = document.createElement("div");
+  gray.className = "scare-gray";
+  document.body.appendChild(gray);
+
+  var words = ["在看你", "就在身边", "回头看看", "别走", "嘿", "奶龙在这里"];
+  var created = [gray];
+  var t = setInterval(function () {
+    for (var i = 0; i < 12; i++) {
+      var el = document.createElement("div");
+      el.className = "scare-float";
+      el.textContent = words[Math.floor(Math.random() * words.length)];
+      el.style.left = Math.random() * 100 + "vw";
+      el.style.top = Math.random() * 100 + "vh";
+      document.body.appendChild(el);
+      created.push(el);
+    }
+  }, 120);
+
+  quizTimers.push(setTimeout(function () {
+    clearInterval(t);
+    for (var j = 0; j < created.length; j++) created[j].remove();
+  }, 4500));
+}
+
+// 答完所有题
+function quizFinish() {
+  document.getElementById("quizBox").style.display = "none";
+
+  // 黑屏填满"奶龙"
+  var flood = document.createElement("div");
+  flood.className = "scare-flood";
+  var fill = "";
+  for (var i = 0; i < 200; i++) fill += "奶龙";
+  flood.textContent = fill;
+  document.body.appendChild(flood);
+
+  setTimeout(function () {
+    flood.remove();
+    document.getElementById("quizUnlock").style.display = "grid";
+  }, 2500);
+}
+
+// 展示结果奶龙
+function quizShowResult() {
+  document.getElementById("quizResult").style.display = "grid";
+  var name = localStorage.getItem("nailongUser") || "陌生人";
+  var group = materialGroups[Math.floor(Math.random() * 3)];
+  if (group && group.files.length > 0) {
+    var file = group.files[Math.floor(Math.random() * group.files.length)];
+    document.getElementById("quizResultImg").src = group.folder + file;
+  }
+  document.getElementById("quizResultTitle").textContent = name + "，这只奶龙一直在等你";
+}
+
+// 组词页：只允许输入 1-15 个英文字母
+function initWordForm() {
+  var form = document.getElementById("wordForm");
+  if (!form) return;
+
+  form.onsubmit = function (e) {
+    e.preventDefault();
+    var val = document.getElementById("wordInput").value.trim().toUpperCase();
     setError("wordInputError", "");
 
-    if (value === "") {
+    if (!val) {
       setError("wordInputError", "请输入 1-15 个英文字母。");
       return;
     }
-
-    if (value.length > 15) {
+    if (val.length > 15) {
       setError("wordInputError", "最多输入 15 个字母。");
       return;
     }
-
-    if (!/^[A-Z]+$/.test(value)) {
+    if (!/^[A-Z]+$/.test(val)) {
       setError("wordInputError", "只能输入英文字母，不能输入中文、数字或符号。");
       return;
     }
-
-    drawWordImage(value);
+    drawWordImage(val);
   };
 }
 
-// ===== 奶龙组词页：把字母图片画到 Canvas，并生成下载链接 =====
+// 把每个字母对应的奶龙图片拼到 Canvas 上，并生成下载链接
 function drawWordImage(word) {
-  var canvas = document.getElementById("wordCanvas");
+  var canvas   = document.getElementById("wordCanvas");
   var download = document.getElementById("downloadWord");
-  if (!canvas || !canvas.getContext || !download) {
-    return;
-  }
+  if (!canvas) return;
 
-  var paths = [];
-  if (word === "OK") {
-    paths.push(BASE_URL + "/images/奶龙字母/OK.jpg");
-  } else {
-    for (var i = 0; i < word.length; i++) {
-      paths.push(BASE_URL + "/images/奶龙字母/" + word.charAt(i) + ".jpg");
-    }
-  }
+  var paths = word === "OK"
+    ? [BASE_URL + "/images/奶龙字母/OK.jpg"]
+    : word.split("").map(function (c) { return BASE_URL + "/images/奶龙字母/" + c + ".jpg"; });
 
-  loadImages(paths, function (images, failed) {
-    if (failed > 0) {
-      setError("wordInputError", "有字母素材加载失败，请稍后重试。");
-      return;
-    }
-
-    var ctx = canvas.getContext("2d");
-    var cell = 120;
-    var gap = 0;
-    canvas.width = images.length * cell;
-    canvas.height = 120;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    for (var i = 0; i < images.length; i++) {
-      var x = i * (cell + gap);
-      ctx.drawImage(images[i], x, 0, cell, cell);
-    }
-
-    try {
-      download.href = canvas.toDataURL("image/png");
-      download.download = "nailong-word-" + word + ".png";
-      download.className = "btn primary";
-    } catch (error) {
-      console.error("导出图片失败:", error);
-      setError("wordInputError", "当前环境不允许导出跨域图片，请在同源站点访问或开启图片 CORS。");
-      download.removeAttribute("href");
-      download.className = "btn";
-    }
-  });
-}
-
-// ===== 图片加载：等所有字母图片加载完成后再绘制 =====
-function loadImages(paths, callback) {
-  var images = [];
-  var loaded = 0;
-  var failed = 0;
-
-  if (paths.length === 0) {
-    callback(images, failed);
-    return;
-  }
-
-  for (var i = 0; i < paths.length; i++) {
+  // 等所有图片加载完再一起绘制
+  var imgs = [], loaded = 0, failed = 0;
+  paths.forEach(function (src, i) {
     var img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = function () {
       loaded++;
-      if (loaded === paths.length) {
-        callback(images, failed);
-      }
+      if (loaded === paths.length) draw();
     };
     img.onerror = function () {
-      failed++;
-      loaded++;
-      if (loaded === paths.length) {
-        callback(images, failed);
-      }
+      failed++; loaded++;
+      if (loaded === paths.length) draw();
     };
-    img.src = paths[i];
-    images.push(img);
+    img.src = src;
+    imgs[i] = img;
+  });
+
+  function draw() {
+    if (failed > 0) {
+      setError("wordInputError", "有字母素材加载失败，请稍后重试。");
+      return;
+    }
+    var ctx  = canvas.getContext("2d");
+    var cell = 120;
+    canvas.width  = imgs.length * cell;
+    canvas.height = cell;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    imgs.forEach(function (img, i) {
+      ctx.drawImage(img, i * cell, 0, cell, cell);
+    });
+    try {
+      download.href     = canvas.toDataURL("image/png");
+      download.download = "nailong-" + word + ".png";
+      download.className = "btn primary";
+    } catch (err) {
+      setError("wordInputError", "跨域限制，无法导出图片。");
+    }
   }
 }
 
-// ===== 首页拼贴轮播：切换 active，让当前 GIF 放大 =====
+// 首页轮播：把随机抽到的 GIF 填入三张卡片，每 3 秒切换一次
 function initSlider() {
   var cards = document.querySelectorAll(".collage-card");
-  if (cards.length === 0) {
-    return;
-  }
-  var imgs = document.querySelectorAll(".collage-card img");
-  for (var i = 0; i < imgs.length; i++) {
-    imgs[i].src = bannerSlides[i].src;
-    imgs[i].alt = bannerSlides[i].alt;
-  }
+  if (cards.length === 0) return;
 
-  var index = 0;
+  cards.forEach(function (card, i) {
+    card.querySelector("img").src = bannerSlides[i].src;
+  });
 
-  function showSlide(nextIndex) {
-    index = nextIndex;
-    for (var i = 0; i < cards.length; i++) {
-      cards[i].className = "collage-card";
-    }
-    cards[index].className = "collage-card active";
-  }
-
+  var idx = 0;
   setInterval(function () {
-    var next = (index + 1) % cards.length;
-    showSlide(next);
+    cards[idx].classList.remove("active");
+    idx = (idx + 1) % cards.length;
+    cards[idx].classList.add("active");
   }, 3000);
 }
 
-// ===== 大笑视频页：自动静音播放，点击按钮后打开声音 =====
-function initSmileVideo() {
-  var video = document.getElementById("smileVideo");
-  var button = document.getElementById("smilePlayButton");
-  if (!video || !button) {
+// 收藏页：把 localStorage 里的收藏渲染成可拖动的冰箱贴
+function initCollectionPage() {
+  var board = document.getElementById("collectionGrid");
+  if (!board) return;
+
+  var favorites = JSON.parse(localStorage.getItem("nailongFavorites") || "[]");
+  if (favorites.length === 0) {
+    board.innerHTML = '<p class="empty-note">冰箱门还空着。回到分类页，把喜欢的素材拖进收藏篮。</p>';
     return;
   }
 
-  video.muted = true;
-  var playResult = video.play();
-  if (playResult) {
-    playResult.catch(function () {
-      button.textContent = "点击播放";
-    });
-  }
+  var positions = JSON.parse(localStorage.getItem("nailongNotePositions") || "{}");
+  var html = "";
+  favorites.forEach(function (fav, i) {
+    var left   = positions[fav.key] ? positions[fav.key].left   : 34 + (i % 4) * 205;
+    var top    = positions[fav.key] ? positions[fav.key].top    : 38 + Math.floor(i / 4) * 230;
+    var rotate = positions[fav.key] ? positions[fav.key].rotate : (i % 2 === 0 ? -4 : 4);
+    html += '<article class="fridge-note" data-key="' + fav.key + '" data-rotate="' + rotate + '" style="left:' + left + 'px;top:' + top + 'px;transform:rotate(' + rotate + 'deg);">';
+    html += '<img src="' + fav.image + '" alt="' + fav.title + '"><h3>' + fav.title + '</h3></article>';
+  });
+  board.innerHTML = html;
 
-  button.onclick = function () {
-    video.muted = false;
-    video.volume = 1;
-    video.play();
-    button.textContent = "正在大笑";
-  };
+  // 鼠标拖动冰箱贴，松开后保存位置
+  board.querySelectorAll(".fridge-note").forEach(function (note) {
+    note.onmousedown = function (e) {
+      e.preventDefault();
+      var boardRect = board.getBoundingClientRect();
+      var offX = e.clientX - note.getBoundingClientRect().left;
+      var offY = e.clientY - note.getBoundingClientRect().top;
+      var rot  = note.dataset.rotate || "0";
+      note.style.zIndex = 99;
+      note.style.transform = "rotate(0deg) scale(1.05)";
+
+      document.onmousemove = function (me) {
+        var l = Math.min(Math.max(me.clientX - boardRect.left - offX, 0), board.clientWidth  - note.offsetWidth);
+        var t = Math.min(Math.max(me.clientY - boardRect.top  - offY, 0), board.clientHeight - note.offsetHeight);
+        note.style.left = l + "px";
+        note.style.top  = t + "px";
+      };
+      document.onmouseup = function () {
+        note.style.transform = "rotate(" + rot + "deg)";
+        var pos = JSON.parse(localStorage.getItem("nailongNotePositions") || "{}");
+        pos[note.dataset.key] = { left: parseInt(note.style.left), top: parseInt(note.style.top), rotate: parseInt(rot) };
+        localStorage.setItem("nailongNotePositions", JSON.stringify(pos));
+        document.onmousemove = null;
+        document.onmouseup   = null;
+      };
+    };
+  });
 }
 
-// ===== 首页 Canvas：按素材分类数量绘制动态占比图 =====
-function initCanvas() {
-  var canvas = document.getElementById("moodCanvas");
-  if (!canvas || !canvas.getContext) {
-    return;
-  }
-
-  var ctx = canvas.getContext("2d");
-  var total = 0;
-  var colors = ["#ffd447", "#74d3ff", "#00a878", "#ff6f61", "#111827"];
-  var progress = 0;
-
-  for (var i = 0; i < materialGroups.length; i++) {
-    total += materialGroups[i].files.length;
-  }
-
-  function drawFrame() {
-    progress += 0.035;
-    if (progress > 1) {
-      progress = 1;
-    }
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.font = "18px Arial";
-    ctx.fillStyle = "#111827";
-    ctx.fillText("素材占比统计", 20, 32);
-
-    var startAngle = -Math.PI / 2;
-    for (var i = 0; i < materialGroups.length; i++) {
-      var angle = (materialGroups[i].files.length / total) * Math.PI * 2 * progress;
-      ctx.beginPath();
-      ctx.moveTo(94, 118);
-      ctx.arc(94, 118, 62, startAngle, startAngle + angle);
-      ctx.closePath();
-      ctx.fillStyle = colors[i];
-      ctx.fill();
-      startAngle += angle;
-    }
-
-    for (var j = 0; j < materialGroups.length; j++) {
-      var y = 58 + j * 28;
-      ctx.fillStyle = colors[j];
-      ctx.fillRect(190, y, 16, 16);
-      ctx.fillStyle = "#111827";
-      ctx.font = "14px Arial";
-      ctx.fillText(materialGroups[j].categoryName + " " + materialGroups[j].files.length, 214, y + 13);
-    }
-
-    ctx.fillStyle = "#667085";
-    ctx.fillText("总数 " + total, 190, 202);
-
-    if (progress < 1) {
-      requestAnimationFrame(drawFrame);
-    }
-  }
-
-  drawFrame();
-}
-
-// ===== 分类页：根据 materialGroups 动态生成分类按钮 =====
-function renderCategoryTabs() {
-  var tabsContainer = document.getElementById("categoryTabs");
-  if (!tabsContainer) {
-    return;
-  }
-
-  var html = '<button class="tab active" type="button" data-category="all">全部</button>';
-  for (var i = 0; i < materialGroups.length; i++) {
-    html += '<button class="tab" type="button" data-category="' + materialGroups[i].category + '">' + materialGroups[i].categoryName + '</button>';
-  }
-
-  tabsContainer.innerHTML = html;
-}
-
-// ===== 分类页：绑定分类按钮并渲染素材 =====
+// 分类页：动态生成分类 tab 按钮并初始化
 function initCategoryPage() {
   var grid = document.getElementById("categoryGrid");
-  if (!grid) {
-    return;
-  }
+  if (!grid) return;
 
-  renderCategoryTabs();
+  // 生成分类按钮
+  var tabsEl = document.getElementById("categoryTabs");
+  var html = '<button class="tab active" type="button" data-category="all">全部</button>';
+  materialGroups.forEach(function (g) {
+    html += '<button class="tab" type="button" data-category="' + g.category + '">' + g.categoryName + '</button>';
+  });
+  tabsEl.innerHTML = html;
 
-  var tabsContainer = document.getElementById("categoryTabs");
-  if (!tabsContainer) {
-    return;
-  }
-
-  var tabs = tabsContainer.querySelectorAll(".tab");
-  for (var i = 0; i < tabs.length; i++) {
-    tabs[i].onclick = function () {
-      categoryState.currentCategory = this.getAttribute("data-category");
-      categoryState.currentPage = 1;
-      for (var j = 0; j < tabs.length; j++) {
-        tabs[j].className = "tab";
-      }
-      this.className = "tab active";
+  // 点击分类按钮时切换
+  tabsEl.querySelectorAll(".tab").forEach(function (btn) {
+    btn.onclick = function () {
+      tabsEl.querySelectorAll(".tab").forEach(function (b) { b.className = "tab"; });
+      btn.className = "tab active";
+      curCategory = btn.dataset.category;
+      curPage = 1;
       renderCategoryItems();
     };
-  }
+  });
 
   renderCategoryItems();
 }
 
-// ===== 分页组件：生成带省略号和前后翻页的分页按钮 =====
-function buildPagination(current, total) {
-  if (total <= 1) return "";
-  var html = "";
-
-  // 上一页
-  html += '<button type="button" ' + (current === 1 ? "disabled" : 'data-page="' + (current - 1) + '"') + '>&laquo;</button>';
-
-  // 计算要显示哪些页码
-  var pages = [];
-  var left = current - 2;
-  var right = current + 2;
-  if (left < 1) { right += (1 - left); left = 1; }
-  if (right > total) { left -= (right - total); right = total; }
-  if (left < 1) left = 1;
-
-  if (left > 1) { pages.push(1); if (left > 2) pages.push("..."); }
-  for (var i = left; i <= right; i++) pages.push(i);
-  if (right < total) { if (right < total - 1) pages.push("..."); pages.push(total); }
-
-  for (var j = 0; j < pages.length; j++) {
-    if (pages[j] === "...") {
-      html += '<span class="page-ellipsis">...</span>';
-    } else {
-      html += '<button type="button" class="' + (pages[j] === current ? "active" : "") + '" data-page="' + pages[j] + '">' + pages[j] + '</button>';
-    }
-  }
-
-  // 下一页
-  html += '<button type="button" ' + (current === total ? "disabled" : 'data-page="' + (current + 1) + '"') + '>&raquo;</button>';
-
-  return html;
-}
-
-// ===== 分类页：直接展开 materialGroups，生成当前分类的卡片和分页 =====
+// 把当前分类、当前页的素材渲染到网格
 function renderCategoryItems() {
-  var grid = document.getElementById("categoryGrid");
-  var pagination = document.getElementById("pagination");
-  var list = [];
+  var grid  = document.getElementById("categoryGrid");
+  var pgEl  = document.getElementById("pagination");
+  var list  = [];
 
-  for (var i = 0; i < materialGroups.length; i++) {
-    var group = materialGroups[i];
-    if (categoryState.currentCategory !== "all" && group.category !== categoryState.currentCategory) {
-      continue;
-    }
+  materialGroups.forEach(function (g) {
+    if (curCategory !== "all" && g.category !== curCategory) return;
+    g.files.forEach(function (file, j) {
+      var title = g.category === "letters" ? file.replace(".jpg", "") : g.titlePrefix + " " + (j + 1 < 10 ? "0" + (j + 1) : j + 1);
+      list.push({ category: g.category, file: file, title: title, image: g.folder + file });
+    });
+  });
 
-    for (var j = 0; j < group.files.length; j++) {
-      var file = group.files[j];
-      var number = j + 1;
-      var title = group.titlePrefix + " " + (number < 10 ? "0" + number : number);
-      if (group.category === "letters") {
-        title = file.replace(".jpg", "");
-      }
-      list.push({
-        category: group.category,
-        file: file,
-        title: title,
-        image: group.folder + file
-      });
-    }
-  }
+  var totalPages = Math.ceil(list.length / pageSize);
+  var pageItems  = list.slice((curPage - 1) * pageSize, curPage * pageSize);
 
-  var totalPages = Math.ceil(list.length / categoryState.pageSize);
-  var start = (categoryState.currentPage - 1) * categoryState.pageSize;
-  var pageItems = list.slice(start, start + categoryState.pageSize);
   var html = "";
-
-  for (var k = 0; k < pageItems.length; k++) {
-    html += '<article class="feature-card gallery-card" draggable="true" data-title="' + pageItems[k].title + '" data-category="' + pageItems[k].category + '" data-file="' + pageItems[k].file + '" tabindex="0">';
-    html += '<img src="' + pageItems[k].image + '" alt="' + pageItems[k].title + '">';
-    html += "<h3>" + pageItems[k].title + "</h3>";
-    html += "</article>";
-  }
-
+  pageItems.forEach(function (item) {
+    html += '<article class="feature-card gallery-card" draggable="true" data-title="' + item.title + '" data-category="' + item.category + '" data-file="' + item.file + '" tabindex="0">';
+    html += '<img src="' + item.image + '" alt="' + item.title + '"><h3>' + item.title + '</h3></article>';
+  });
   grid.innerHTML = html;
 
-  pagination.innerHTML = buildPagination(categoryState.currentPage, totalPages);
-
-  var pageButtons = pagination.querySelectorAll("button");
-  for (var b = 0; b < pageButtons.length; b++) {
-    pageButtons[b].onclick = function () {
-      var page = this.getAttribute("data-page");
-      if (!page) return;
-      categoryState.currentPage = parseInt(page, 10);
-      renderCategoryItems();
-      var gridEl = document.getElementById("categoryGrid");
-      if (gridEl) gridEl.scrollIntoView({ behavior: "smooth", block: "start" });
-    };
+  // 分页按钮
+  var pgHtml = "";
+  pgHtml += '<button type="button"' + (curPage === 1 ? " disabled" : ' data-page="' + (curPage - 1) + '"') + '>&laquo;</button>';
+  for (var p = 1; p <= totalPages; p++) {
+    pgHtml += '<button type="button" class="' + (p === curPage ? "active" : "") + '" data-page="' + p + '">' + p + '</button>';
   }
+  pgHtml += '<button type="button"' + (curPage === totalPages ? " disabled" : ' data-page="' + (curPage + 1) + '"') + '>&raquo;</button>';
+  pgEl.innerHTML = pgHtml;
 
-  initCardOpen();
+  pgEl.querySelectorAll("button").forEach(function (btn) {
+    btn.onclick = function () {
+      if (!btn.dataset.page) return;
+      curPage = parseInt(btn.dataset.page);
+      renderCategoryItems();
+      grid.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+  });
+
+  // 点击卡片跳到详情页，双击收藏
+  grid.querySelectorAll(".feature-card").forEach(function (card) {
+    card.onclick = function () {
+      location.href = "detail.html?category=" + encodeURIComponent(card.dataset.category) + "&file=" + encodeURIComponent(card.dataset.file);
+    };
+    card.ondblclick = function (e) {
+      e.preventDefault();
+      addFavorite(card.dataset.category, card.dataset.file, card.dataset.title);
+      renderFavoriteList();
+    };
+    card.onkeydown = function (e) { if (e.key === "Enter") card.click(); };
+  });
+
   initDragAndDrop();
 }
 
-// ===== 分类页：点击素材卡片时加入收藏，双击预览大图 =====
-function initCardOpen() {
-  var cards = document.querySelectorAll(".feature-card");
-  for (var i = 0; i < cards.length; i++) {
-    cards[i].onclick = function () {
-      var category = this.getAttribute("data-category");
-      var file = this.getAttribute("data-file");
-      var title = this.getAttribute("data-title");
-      if (category && file) {
-        addFavorite(category, file, title);
-        renderFavoriteList();
-      }
-    };
-    cards[i].ondblclick = function (e) {
-      e.stopPropagation();
-      var img = this.querySelector("img");
-      if (img) openLightbox(img.src, this.getAttribute("data-title"));
-    };
-    cards[i].onkeydown = function (event) {
-      if (event.key === "Enter") this.click();
-      if (event.key === " ") {
-        event.preventDefault();
-        var img = this.querySelector("img");
-        if (img) openLightbox(img.src, this.getAttribute("data-title"));
-      }
-    };
-  }
-}
-
-// ===== 收藏页：把已收藏素材渲染成冰箱贴墙 =====
-function initCollectionPage() {
-  var grid = document.getElementById("collectionGrid");
-  if (!grid) {
-    return;
-  }
-
-  var favorites = getFavorites();
-  if (favorites.length === 0) {
-    grid.innerHTML = '<p class="empty-note">冰箱门还空着。回到分类页，把喜欢的素材拖进收藏篮。</p>';
-    return;
-  }
-
-  var positions = getNotePositions();
-  var html = "";
-  for (var i = 0; i < favorites.length; i++) {
-    var left = 34 + i % 4 * 205;
-    var top = 38 + Math.floor(i / 4) * 230;
-    var rotate = i % 2 === 0 ? -4 : 4;
-    if (positions[favorites[i].key]) {
-      left = positions[favorites[i].key].left;
-      top = positions[favorites[i].key].top;
-      rotate = positions[favorites[i].key].rotate;
-    }
-    html += '<article class="fridge-note" data-key="' + favorites[i].key + '" data-rotate="' + rotate + '" style="left:' + left + 'px; top:' + top + 'px; transform: rotate(' + rotate + 'deg);">';
-    html += '<img src="' + favorites[i].image + '" alt="' + favorites[i].title + '">';
-    html += "<h3>" + favorites[i].title + "</h3>";
-    html += "</article>";
-  }
-  grid.innerHTML = html;
-  initFridgeDrag(grid);
-}
-
-// ===== 收藏页：读取和保存每张冰箱贴的位置 =====
-function getNotePositions() {
-  var text = localStorage.getItem("nailongNotePositions");
-  if (!text) {
-    return {};
-  }
-  try {
-    return JSON.parse(text);
-  } catch (error) {
-    return {};
-  }
-}
-
-function saveNotePositions(positions) {
-  localStorage.setItem("nailongNotePositions", JSON.stringify(positions));
-}
-
-// ===== 收藏页：鼠标拖动冰箱贴，松手后保存位置 =====
-function initFridgeDrag(board) {
-  var notes = board.querySelectorAll(".fridge-note");
-  var maxZ = 10;
-
-  for (var i = 0; i < notes.length; i++) {
-    notes[i].onmousedown = function (event) {
-      event.preventDefault();
-      var note = this;
-      var boardRect = board.getBoundingClientRect();
-      var noteRect = note.getBoundingClientRect();
-      var offsetX = event.clientX - noteRect.left;
-      var offsetY = event.clientY - noteRect.top;
-      var rotate = note.getAttribute("data-rotate") || "0";
-
-      maxZ++;
-      note.style.zIndex = maxZ;
-      note.className = "fridge-note dragging";
-      note.style.transform = "rotate(0deg) scale(1.05)";
-
-      document.onmousemove = function (moveEvent) {
-        var left = moveEvent.clientX - boardRect.left - offsetX;
-        var top = moveEvent.clientY - boardRect.top - offsetY;
-        var maxLeft = board.clientWidth - note.offsetWidth;
-        var maxTop = board.clientHeight - note.offsetHeight;
-
-        if (left < 0) {
-          left = 0;
-        }
-        if (top < 0) {
-          top = 0;
-        }
-        if (left > maxLeft) {
-          left = maxLeft;
-        }
-        if (top > maxTop) {
-          top = maxTop;
-        }
-
-        note.style.left = left + "px";
-        note.style.top = top + "px";
-      };
-
-      document.onmouseup = function () {
-        note.className = "fridge-note";
-        note.style.transform = "rotate(" + rotate + "deg)";
-
-        var positions = getNotePositions();
-        positions[note.getAttribute("data-key")] = {
-          left: parseInt(note.style.left, 10),
-          top: parseInt(note.style.top, 10),
-          rotate: parseInt(rotate, 10)
-        };
-        saveNotePositions(positions);
-
-        document.onmousemove = null;
-        document.onmouseup = null;
-      };
-    };
-  }
-}
-
-// ===== 首页和分类页：拖放素材到收藏篮 =====
+// 首页和分类页的拖放收藏功能
 function initDragAndDrop() {
-  var cards = document.querySelectorAll(".feature-card");
-  var dropZone = document.getElementById("dropZone");
+  var dropZone    = document.getElementById("dropZone");
   var favoriteList = document.getElementById("favoriteList");
-  var clearButton = document.getElementById("clearFavorites");
-  if (!dropZone || !favoriteList) {
-    return;
-  }
+  if (!dropZone) return;
 
-  if (clearButton) {
-    clearButton.onclick = function () {
-      saveFavorites([]);
-      saveNotePositions({});
-      renderFavoriteList();
-    };
-  }
-
-  for (var i = 0; i < cards.length; i++) {
-    cards[i].ondragstart = function (event) {
-      event.dataTransfer.setData("text/plain", this.getAttribute("data-title"));
-      event.dataTransfer.setData("text/category", this.getAttribute("data-category") || "");
-      event.dataTransfer.setData("text/file", this.getAttribute("data-file") || "");
-    };
-  }
-
-  dropZone.ondragover = function (event) {
-    event.preventDefault();
-    dropZone.className = "drop-zone over";
+  document.getElementById("clearFavorites").onclick = function () {
+    localStorage.removeItem("nailongFavorites");
+    localStorage.removeItem("nailongNotePositions");
+    renderFavoriteList();
   };
 
-  dropZone.ondragleave = function () {
-    dropZone.className = "drop-zone";
-  };
+  document.querySelectorAll(".feature-card").forEach(function (card) {
+    card.ondragstart = function (e) {
+      e.dataTransfer.setData("text/plain",    card.dataset.title);
+      e.dataTransfer.setData("text/category", card.dataset.category || "");
+      e.dataTransfer.setData("text/file",     card.dataset.file || "");
+    };
+  });
 
-  dropZone.ondrop = function (event) {
-    event.preventDefault();
-    var title = event.dataTransfer.getData("text/plain");
-    var category = event.dataTransfer.getData("text/category");
-    var file = event.dataTransfer.getData("text/file");
+  dropZone.ondragover  = function (e) { e.preventDefault(); dropZone.className = "drop-zone over"; };
+  dropZone.ondragleave = function ()  { dropZone.className = "drop-zone"; };
+  dropZone.ondrop = function (e) {
+    e.preventDefault();
+    var title    = e.dataTransfer.getData("text/plain");
+    var category = e.dataTransfer.getData("text/category");
+    var file     = e.dataTransfer.getData("text/file");
     if (title && category && file) {
       addFavorite(category, file, title);
       renderFavoriteList();
@@ -780,147 +702,171 @@ function initDragAndDrop() {
   renderFavoriteList();
 }
 
-// ===== 收藏数据：读取和保存 localStorage =====
-function getFavorites() {
-  var text = localStorage.getItem("nailongFavorites");
-  if (!text) {
-    return [];
-  }
-  try {
-    return JSON.parse(text);
-  } catch (error) {
-    return [];
-  }
-}
-
-function saveFavorites(list) {
-  localStorage.setItem("nailongFavorites", JSON.stringify(list));
-}
-
-// ===== 收藏数据：根据分类和文件名加入收藏 =====
+// 把一条素材加入收藏（重复的跳过）
 function addFavorite(category, file, title) {
   var image = "";
-  for (var i = 0; i < materialGroups.length; i++) {
-    if (materialGroups[i].category === category) {
-      image = materialGroups[i].folder + file;
-    }
-  }
+  materialGroups.forEach(function (g) {
+    if (g.category === category) image = g.folder + file;
+  });
+  if (!image) return;
 
-  if (image === "") {
-    return;
-  }
-
-  var list = getFavorites();
-  var key = category + "|" + file;
-  var exists = false;
-
-  for (var j = 0; j < list.length; j++) {
-    if (list[j].key === key) {
-      exists = true;
-    }
-  }
-
-  if (!exists) {
-    list.push({
-      key: key,
-      category: category,
-      file: file,
-      title: title,
-      image: image
-    });
-    saveFavorites(list);
+  var list = JSON.parse(localStorage.getItem("nailongFavorites") || "[]");
+  var key  = category + "|" + file;
+  if (!list.some(function (f) { return f.key === key; })) {
+    list.push({ key: key, category: category, file: file, title: title, image: image });
+    localStorage.setItem("nailongFavorites", JSON.stringify(list));
   }
 }
 
-// ===== 加载遮罩 =====
-var loadingMaskEl = null;
+// 渲染收藏篮列表，每条有删除按钮
+function renderFavoriteList() {
+  var el = document.getElementById("favoriteList");
+  if (!el) return;
 
-function showLoadingMask() {
-  if (loadingMaskEl) return;
-  loadingMaskEl = document.createElement("div");
-  loadingMaskEl.className = "loading-mask";
-  loadingMaskEl.innerHTML = '<div class="loading-spinner"></div><p>素材加载中…</p>';
-  document.body.appendChild(loadingMaskEl);
+  var list = JSON.parse(localStorage.getItem("nailongFavorites") || "[]");
+  el.innerHTML = list.map(function (fav, i) {
+    return '<li><span>' + fav.title + '</span><button type="button" data-index="' + i + '">删除</button></li>';
+  }).join("");
+
+  el.querySelectorAll("button").forEach(function (btn) {
+    btn.onclick = function () {
+      var list = JSON.parse(localStorage.getItem("nailongFavorites") || "[]");
+      var removed = list.splice(parseInt(btn.dataset.index), 1)[0];
+      localStorage.setItem("nailongFavorites", JSON.stringify(list));
+      // 同步删除位置记录
+      if (removed) {
+        var pos = JSON.parse(localStorage.getItem("nailongNotePositions") || "{}");
+        delete pos[removed.key];
+        localStorage.setItem("nailongNotePositions", JSON.stringify(pos));
+      }
+      renderFavoriteList();
+    };
+  });
 }
 
-function hideLoadingMask() {
-  if (!loadingMaskEl) return;
-  loadingMaskEl.classList.add("hide");
-  setTimeout(function () {
-    if (loadingMaskEl && loadingMaskEl.parentNode) {
-      loadingMaskEl.parentNode.removeChild(loadingMaskEl);
-      loadingMaskEl = null;
-    }
-  }, 380);
+// 大笑页：默认静音自动播放，点按钮后开声音
+function initSmileVideo() {
+  var video  = document.getElementById("smileVideo");
+  var button = document.getElementById("smilePlayButton");
+  if (!video || !button) return;
+
+  video.play().catch(function () { button.textContent = "点击播放"; });
+  button.onclick = function () {
+    video.muted  = false;
+    video.volume = 1;
+    video.play();
+    button.textContent = "正在大笑";
+  };
 }
 
-// ===== 浮动提醒关闭 =====
+// 浮动广告：在页面右下角飘着，可以关掉
 function initFloatAd() {
   var ad = document.getElementById("floatAd");
-  var btn = document.getElementById("floatClose");
-  if (!ad || !btn) return;
-  btn.onclick = function () {
-    ad.style.transition = "opacity 0.3s ease, transform 0.3s ease";
-    ad.style.opacity = "0";
-    ad.style.transform = "translateY(16px)";
-    setTimeout(function () {
-      if (ad.parentNode) ad.parentNode.removeChild(ad);
-    }, 320);
+  if (!ad) return;
+
+  var closeBtn = document.getElementById("closeFloatAd");
+  closeBtn.onclick = function () {
+    ad.style.display = "none";
   };
+
+  // 让广告上下慢慢飘动
+  var baseBottom = 28;
+  var direction = 1;
+  var offset = 0;
+  setInterval(function () {
+    offset += direction * 0.4;
+    if (offset > 18 || offset < -18) direction *= -1;
+    ad.style.bottom = (baseBottom + offset) + "px";
+  }, 50);
 }
 
-// ===== 图片灯箱 =====
-function openLightbox(src, alt) {
-  var box = document.createElement("div");
-  box.className = "lightbox";
-  box.innerHTML =
-    '<button class="lightbox-close" type="button" aria-label="关闭">×</button>' +
-    '<img src="' + src + '" alt="' + (alt || "") + '">';
+// 详情页：从 url 参数拿到素材信息，渲染大图和详情
+function initDetailPage() {
+  var wrap = document.getElementById("detailWrap");
+  if (!wrap) return;
 
-  function close() {
-    if (box.parentNode) box.parentNode.removeChild(box);
-    document.removeEventListener("keydown", onKey);
-  }
+  var params = new URLSearchParams(location.search);
+  var category = params.get("category");
+  var file = params.get("file");
 
-  function onKey(e) {
-    if (e.key === "Escape") close();
-  }
-
-  box.onclick = function (e) {
-    if (e.target === box || e.target.className === "lightbox-close") close();
-  };
-  document.addEventListener("keydown", onKey);
-  document.body.appendChild(box);
-}
-
-// ===== 收藏篮：显示收藏项，并支持单个删除 =====
-function renderFavoriteList() {
-  var favoriteList = document.getElementById("favoriteList");
-  if (!favoriteList) {
+  if (!category || !file) {
+    wrap.innerHTML = '<p class="empty-note">没有指定素材，请从分类页点击进入。</p>';
     return;
   }
 
-  var favorites = getFavorites();
-  var html = "";
-  for (var i = 0; i < favorites.length; i++) {
-    html += '<li><span>' + favorites[i].title + '</span><button type="button" data-index="' + i + '">删除</button></li>';
+  var group = null;
+  for (var i = 0; i < materialGroups.length; i++) {
+    if (materialGroups[i].category === category) {
+      group = materialGroups[i];
+      break;
+    }
   }
-  favoriteList.innerHTML = html;
+  if (!group) {
+    wrap.innerHTML = '<p class="empty-note">找不到这个分类。</p>';
+    return;
+  }
 
-  var buttons = favoriteList.querySelectorAll("button");
-  for (var j = 0; j < buttons.length; j++) {
-    buttons[j].onclick = function () {
-      var index = parseInt(this.getAttribute("data-index"), 10);
-      var list = getFavorites();
-      var removed = list[index];
-      var positions = getNotePositions();
-      if (removed && positions[removed.key]) {
-        delete positions[removed.key];
-        saveNotePositions(positions);
-      }
-      list.splice(index, 1);
-      saveFavorites(list);
-      renderFavoriteList();
+  var imageSrc = group.folder + file;
+  var title = file.replace(/\.\w+$/, "");
+  if (category !== "letters") {
+    var idx = group.files.indexOf(file);
+    title = group.titlePrefix + " " + (idx + 1 < 10 ? "0" + (idx + 1) : idx + 1);
+  }
+
+  // 拼出详情卡片
+  var html = '<div class="detail-card glass">';
+  html += '<div class="detail-image-wrap"><img id="detailMainImg" src="' + imageSrc + '" alt="' + title + '"></div>';
+  html += '<div class="detail-content">';
+  html += '<h1>' + title + '</h1>';
+  html += '<ul class="detail-list">';
+  html += '<li>分类：' + group.categoryName + '</li>';
+  html += '<li>文件名：' + file + '</li>';
+  html += '<li>该分类共 ' + group.files.length + ' 张素材</li>';
+  html += '</ul>';
+  html += '<canvas id="detailCanvas" width="320" height="160"></canvas>';
+  html += '<div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">';
+  html += '<button class="btn primary" id="detailFavBtn" type="button">收藏这张</button>';
+  html += '<a class="btn secondary" href="category.html?cat=' + category + '">返回分类</a>';
+  html += '</div></div></div>';
+
+  // 同分类里取几张推荐
+  html += '<section class="panel glass"><h2>同分类推荐</h2><div class="card-grid">';
+  var shuffled = group.files.slice().sort(function () { return Math.random() - 0.5; });
+  var count = 0;
+  for (var j = 0; j < shuffled.length && count < 3; j++) {
+    if (shuffled[j] === file) continue;
+    var recTitle = category === "letters" ? shuffled[j].replace(/\.\w+$/, "") : group.titlePrefix + " " + (j + 1);
+    html += '<article class="feature-card" onclick="location.href=\'detail.html?category=' + category + '&file=' + encodeURIComponent(shuffled[j]) + '\'" style="cursor:pointer">';
+    html += '<img src="' + group.folder + shuffled[j] + '" alt="' + recTitle + '"><h3>' + recTitle + '</h3></article>';
+    count++;
+  }
+  html += '</div></section>';
+
+  wrap.innerHTML = html;
+
+  // 详情页的 canvas 画点装饰文字
+  var cvs = document.getElementById("detailCanvas");
+  if (cvs) {
+    var ctx = cvs.getContext("2d");
+    ctx.fillStyle = "#ffd447";
+    ctx.fillRect(0, 0, cvs.width, cvs.height);
+    ctx.font = "bold 22px Arial";
+    ctx.fillStyle = "#111827";
+    ctx.textAlign = "center";
+    ctx.fillText(title, cvs.width / 2, 60);
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#555";
+    ctx.fillText("分类：" + group.categoryName + " | 共 " + group.files.length + " 张", cvs.width / 2, 100);
+    ctx.fillText("奶龙素材馆", cvs.width / 2, 135);
+  }
+
+  // 收藏按钮
+  var favBtn = document.getElementById("detailFavBtn");
+  if (favBtn) {
+    favBtn.onclick = function () {
+      addFavorite(category, file, title);
+      favBtn.textContent = "已收藏 ✓";
+      favBtn.disabled = true;
     };
   }
 }
