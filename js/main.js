@@ -230,8 +230,17 @@ function renderQuiz() {
 }
 
 function quizPick() {
-  if (quizBusy) return;
   var idx = parseInt(this.getAttribute("data-idx"));
+
+  // 动画播放中仍允许切换选项，只更新选中状态不重复触发特效
+  if (quizBusy) {
+    quizAnswers[quizCurrent] = idx;
+    var opts = document.querySelectorAll(".quiz-opt");
+    for (var i = 0; i < opts.length; i++) opts[i].classList.remove("picked");
+    this.classList.add("picked");
+    return;
+  }
+
   quizAnswers[quizCurrent] = idx;
 
   var opts = document.querySelectorAll(".quiz-opt");
