@@ -531,7 +531,6 @@ function drawWordImage(word) {
   var imgs = [], loaded = 0, failed = 0;
   paths.forEach(function (src, i) {
     var img = new Image();
-    img.crossOrigin = "anonymous";
     img.onload = function () {
       loaded++;
       if (loaded === paths.length) draw();
@@ -562,7 +561,8 @@ function drawWordImage(word) {
       download.download = "nailong-" + word + ".png";
       download.className = "btn primary";
     } catch (err) {
-      setError("wordInputError", "跨域限制，无法导出图片。");
+      download.removeAttribute("href");
+      download.className = "btn secondary";
     }
   }
 }
