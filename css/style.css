@@ -947,18 +947,20 @@ textarea:focus {
 .scare-float {
   position: fixed;
   color: #d80000;
-  opacity: 0.2;
   font-size: 15px;
   font-weight: 700;
   pointer-events: none;
   z-index: 9998;
   white-space: nowrap;
-  animation: floatPulse 3s ease-in-out infinite alternate;
+  opacity: 0;
+  animation: floatLife 2s ease-in-out forwards;
 }
 
-@keyframes floatPulse {
-  from { opacity: 0.1; }
-  to { opacity: 0.25; }
+@keyframes floatLife {
+  0%   { opacity: 0; }
+  20%  { opacity: 0.25; }
+  80%  { opacity: 0.25; }
+  100% { opacity: 0; }
 }
 
 .scare-gray {
