@@ -164,13 +164,11 @@ function initPersonalityForm() {
   };
 
   document.getElementById("quizPrev").onclick = function () {
-    if (quizBusy) return;
     quizCleanEffects();
     if (quizCurrent > 0) { quizCurrent--; renderQuiz(); }
   };
 
   document.getElementById("quizNext").onclick = function () {
-    if (quizBusy) return;
     quizCleanEffects();
     if (quizCurrent < quizQuestions.length - 1) {
       quizCurrent++;
@@ -285,8 +283,6 @@ function quizPick() {
 // 特效播放时锁住所有交互
 function quizLock() {
   quizBusy = true;
-  document.getElementById("quizPrev").disabled = true;
-  document.getElementById("quizNext").disabled = true;
 }
 
 function quizUnlock() {

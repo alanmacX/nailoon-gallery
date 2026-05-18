@@ -909,6 +909,8 @@ textarea:focus {
   justify-content: space-between;
   margin-top: 18px;
   gap: 12px;
+  position: relative;
+  z-index: 10000;
 }
 
 .quiz-btns .btn {
