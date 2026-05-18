@@ -356,12 +356,12 @@ function quizTypeOnBlack(text, nextIdx) {
     } else {
       clearInterval(t);
       quizTimers.push(setTimeout(function () {
-        // 打完后文字乱一下再消失
         var shuffle = setInterval(function () {
           span.textContent = text.split("").sort(function () {
             return Math.random() - 0.5;
           }).join("");
         }, 60);
+        quizIntervals.push(shuffle);
         quizTimers.push(setTimeout(function () {
           clearInterval(shuffle);
           mask.remove();
@@ -372,6 +372,7 @@ function quizTypeOnBlack(text, nextIdx) {
       }, 1200));
     }
   }, 90);
+  quizIntervals.push(t);
 }
 
 // 短暂黑屏闪一句话
