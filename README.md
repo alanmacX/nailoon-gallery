@@ -21,6 +21,7 @@
 - `js/common.js`：用户状态、素材配置、素材列表加载等公共能力。
 - `js/favorites.js`：拖放收藏、收藏列表渲染等跨页能力。
 - `js/*.js`：每个页面绑定自己的脚本，例如 `index.js`、`category.js`、`contact.js`。
+- `js/main.js`：兼容旧缓存 HTML 的兜底加载器，当前页面不再直接依赖它。
 - `images/`：本地主题图片资源，其中 `photos/奶`、`photos/奶果`、`photos/奶气`、`gifs`、`奶龙字母` 会导入分类页。
 - `report.md`：期末报告初稿，可按自己的姓名、学号和截图继续补充。
 

@@ -23,7 +23,8 @@ nailoon-gallery/
 ├── js/
 │   ├── common.js       用户状态、素材加载等公共逻辑
 │   ├── favorites.js    拖放收藏等跨页逻辑
-│   └── *.js            各 HTML 页面对应的独立脚本
+│   ├── *.js            各 HTML 页面对应的独立脚本
+│   └── main.js         兼容旧缓存 HTML 的兜底加载器
 ├── README.md           项目说明
 ├── report.md           项目报告
 ├── limits.md           作业要求说明
@@ -45,7 +46,7 @@ nailoon-gallery/
 - `<link rel="icon">`：加载远程图标 `https://image.hakimi.uno/images/favicon.svg`。
 - `<link rel="stylesheet" href="css/style.css">`：引入全站样式文件。
 
-每个页面末尾先引入公共脚本，再引入当前页面专属脚本。例如首页引入 `common.js`、`favorites.js` 和 `index.js`，登录页只引入 `common.js` 和 `login.js`。
+每个页面末尾先引入公共脚本，再引入当前页面专属脚本。例如首页引入 `common.js`、`favorites.js` 和 `index.js`，登录页只引入 `common.js` 和 `login.js`。脚本 URL 带版本号，避免浏览器继续使用旧缓存。`main.js` 只作为旧 HTML 缓存仍请求统一脚本时的兜底加载器。
 
 ### 2. 公共页头 `header.site-header.glass`
 
