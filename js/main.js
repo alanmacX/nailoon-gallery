@@ -1,21 +1,25 @@
+function delay(ms) {
+  return new Promise(function (resolve) { setTimeout(resolve, ms); });
+}
+
 // 图床地址和素材分类配置
 var BASE_URL = "https://image.hakimi.uno";
 var materialGroups = [];
 var bannerSlides = [];
 
 var materialConfig = [
-  { category: "nai",     name: "奶",     prefix: "奶龙素材", path: "/images/photos/奶/" },
-  { category: "naiguo",  name: "奶果",   prefix: "奶果素材", path: "/images/photos/奶果/" },
-  { category: "naiqi",   name: "奶气",   prefix: "奶气素材", path: "/images/photos/奶气/" },
-  { category: "gifs",    name: "动态表情", prefix: "动态表情", path: "/images/gifs/" },
+  { category: "nai", name: "奶", prefix: "奶龙素材", path: "/images/photos/奶/" },
+  { category: "naiguo", name: "奶果", prefix: "奶果素材", path: "/images/photos/奶果/" },
+  { category: "naiqi", name: "奶气", prefix: "奶气素材", path: "/images/photos/奶气/" },
+  { category: "gifs", name: "动态表情", prefix: "动态表情", path: "/images/gifs/" },
   { category: "letters", name: "奶龙字母", prefix: "字母素材", path: "/images/奶龙字母/" },
-  { category: "stickers",name: "表情包",  prefix: "表情包",   path: "/images/表情包/" }
+  { category: "stickers", name: "表情包", prefix: "表情包", path: "/images/表情包/" }
 ];
 
 // 分类页状态
 var curCategory = "all";
 var curPage = 1;
-var pageSize = 9;
+var pageSize = 12;
 
 // 页面加载后先拉取所有素材列表
 document.addEventListener("DOMContentLoaded", function () {
@@ -97,8 +101,8 @@ function initLoginForm() {
   form.onsubmit = function (e) {
     e.preventDefault();
     var name = document.getElementById("username").value.trim();
-    var pwd  = document.getElementById("password").value;
-    var ok   = true;
+    var pwd = document.getElementById("password").value;
+    var ok = true;
 
     setError("usernameError", "");
     setError("passwordError", "");
@@ -122,26 +126,46 @@ function initLoginForm() {
 
 // 恐怖问卷
 var quizQuestions = [
-  { q: "1. 你第一次看到奶龙的时候，是什么感觉？",
-    opt: ["莫名觉得亲切", "有点可爱又有点怪", "说不上来的不安", "完全无感"] },
-  { q: "2. 深夜刷手机的时候，你有没有觉得奶龙的表情包在盯着你看？",
-    opt: ["经常有这种错觉", "偶尔会多想", "从来没有", "越看越觉得它在笑"] },
-  { q: "3. 你有没有感觉，奶龙的眼睛会跟着你的手指移动？",
-    opt: ["好像真的会", "仔细看确实有点", "不可能吧", "我不敢确认"] },
-  { q: "4. 半夜醒来，你觉得房间角落会不会蹲着一只奶龙？",
-    opt: ["经常这么想", "偶尔会怕", "绝对不会", "希望真的有"] },
-  { q: "5. 如果奶龙现在出现在你面前，你第一反应是？",
-    opt: ["抱住它", "后退一步", "大声叫", "一动不动"] },
-  { q: "6. 安静的时候，你有没有听到过奶龙的叫声？",
-    opt: ["好像听到过", "那只是幻觉吧", "从来没有", "不想回答这个问题"] },
-  { q: "7. 奶龙冲你笑的时候，你觉得那个笑容是……",
-    opt: ["天真的", "意味深长的", "让人心里发毛的", "说不清楚"] },
-  { q: "8. 你现在回头看看身后，确定没有奶龙吗？",
-    opt: ["我不敢回头", "看了，没有", "好像有什么东西", "它一直都在"] },
-  { q: "9. 你觉得奶龙一直在等着什么人吗？",
-    opt: ["不知道", "可能吧", "应该不是我", "就是在等我"] },
-  { q: "10. 最后一个问题——你愿意让奶龙永远记住你吗？",
-    opt: ["愿意", "不太确定", "不愿意", "由不得我选吧"] }
+  {
+    q: "1. 你第一次看到奶龙的时候，是什么感觉？",
+    opt: ["莫名觉得亲切", "有点可爱又有点怪", "说不上来的不安", "完全无感"]
+  },
+  {
+    q: "2. 深夜刷手机的时候，你有没有觉得奶龙的表情包在盯着你看？",
+    opt: ["经常有这种错觉", "偶尔会多想", "从来没有", "越看越觉得它在笑"]
+  },
+  {
+    q: "3. 你有没有感觉，奶龙的眼睛会跟着你的手指移动？",
+    opt: ["好像真的会", "仔细看确实有点", "不可能吧", "我不敢确认"]
+  },
+  {
+    q: "4. 半夜醒来，你觉得房间角落会不会蹲着一只奶龙？",
+    opt: ["经常这么想", "偶尔会怕", "绝对不会", "希望真的有"]
+  },
+  {
+    q: "5. 如果奶龙现在出现在你面前，你第一反应是？",
+    opt: ["抱住它", "后退一步", "大声叫", "一动不动"]
+  },
+  {
+    q: "6. 安静的时候，你有没有听到过奶龙的叫声？",
+    opt: ["好像听到过", "那只是幻觉吧", "从来没有", "不想回答这个问题"]
+  },
+  {
+    q: "7. 奶龙冲你笑的时候，你觉得那个笑容是……",
+    opt: ["天真的", "意味深长的", "让人心里发毛的", "说不清楚"]
+  },
+  {
+    q: "8. 你现在回头看看身后，确定没有奶龙吗？",
+    opt: ["我不敢回头", "看了，没有", "好像有什么东西", "它一直都在"]
+  },
+  {
+    q: "9. 你觉得奶龙一直在等着什么人吗？",
+    opt: ["不知道", "可能吧", "应该不是我", "就是在等我"]
+  },
+  {
+    q: "10. 最后一个问题——你愿意让奶龙永远记住你吗？",
+    opt: ["愿意", "不太确定", "不愿意", "由不得我选吧"]
+  }
 ];
 
 var quizCurrent = 0;
@@ -466,7 +490,7 @@ function quizPeepEffect() {
 }
 
 // 答完所有题
-function quizFinish() {
+async function quizFinish() {
   quizCleanEffects();
   document.getElementById("quizBox").style.display = "none";
 
@@ -474,14 +498,18 @@ function quizFinish() {
   var flood = document.createElement("div");
   flood.className = "scare-flood";
   var fill = "";
-  for (var i = 0; i < 200; i++) fill += "奶龙";
-  flood.textContent = fill;
   document.body.appendChild(flood);
+  flood = document.querySelector(".scare-flood");
+  for (var i = 0; i < 200; i++) {
+    fill += "奶龙";
+    flood.textContent = fill;
+    await delay(10);
+  }
 
   quizTimers.push(setTimeout(function () {
     flood.remove();
     document.getElementById("quizUnlock").style.display = "grid";
-  }, 2500));
+  }, 1000));
 }
 
 // 展示结果奶龙
@@ -524,18 +552,26 @@ function initWordForm() {
 
 // 把每个字母对应的奶龙图片拼到 Canvas 上，并生成下载链接
 function drawWordImage(word) {
-  var canvas   = document.getElementById("wordCanvas");
+  var canvas = document.getElementById("wordCanvas");
   var download = document.getElementById("downloadWord");
   if (!canvas) return;
 
-  var paths = word === "OK"
-    ? [BASE_URL + "/images/奶龙字母/OK.jpg"]
-    : word.split("").map(function (c) { return BASE_URL + "/images/奶龙字母/" + c + ".jpg"; });
+  if (download) {
+    if (download.dataset.objectUrl) {
+      URL.revokeObjectURL(download.dataset.objectUrl);
+      delete download.dataset.objectUrl;
+    }
+    download.removeAttribute("href");
+    download.removeAttribute("download");
+    download.className = "btn secondary";
+  }
 
+  var paths = word.split("").map(function (c) { return BASE_URL + "/images/奶龙字母/" + c + ".jpg"; });
   // 等所有图片加载完再一起绘制
   var imgs = [], loaded = 0, failed = 0;
   paths.forEach(function (src, i) {
     var img = new Image();
+    img.crossOrigin = "anonymous";
     img.onload = function () {
       loaded++;
       if (loaded === paths.length) draw();
@@ -553,21 +589,35 @@ function drawWordImage(word) {
       setError("wordInputError", "有字母素材加载失败，请稍后重试。");
       return;
     }
-    var ctx  = canvas.getContext("2d");
+    var ctx = canvas.getContext("2d");
     var cell = 120;
-    canvas.width  = imgs.length * cell;
+    canvas.width = imgs.length * cell;
     canvas.height = cell;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     imgs.forEach(function (img, i) {
       ctx.drawImage(img, i * cell, 0, cell, cell);
     });
     try {
-      download.href     = canvas.toDataURL("image/png");
-      download.download = "nailong-" + word + ".png";
-      download.className = "btn primary";
+      canvas.toBlob(function (blob) {
+        if (!blob) {
+          setError("wordInputError", "图片下载地址生成失败，请重新生成。");
+          return;
+        }
+        var url = URL.createObjectURL(blob);
+        if (download) {
+          download.href = url;
+          download.download = "nailong-" + word + ".png";
+          download.dataset.objectUrl = url;
+          download.className = "btn primary";
+        }
+      }, "image/png");
     } catch (err) {
-      download.removeAttribute("href");
-      download.className = "btn secondary";
+      setError("wordInputError", err.message);
+      if (download) {
+        download.removeAttribute("href");
+        download.removeAttribute("download");
+        download.className = "btn secondary";
+      }
     }
   }
 }
@@ -603,8 +653,8 @@ function initCollectionPage() {
   var positions = JSON.parse(localStorage.getItem("nailongNotePositions") || "{}");
   var html = "";
   favorites.forEach(function (fav, i) {
-    var left   = positions[fav.key] ? positions[fav.key].left   : 34 + (i % 4) * 205;
-    var top    = positions[fav.key] ? positions[fav.key].top    : 38 + Math.floor(i / 4) * 230;
+    var left = positions[fav.key] ? positions[fav.key].left : 34 + (i % 4) * 205;
+    var top = positions[fav.key] ? positions[fav.key].top : 38 + Math.floor(i / 4) * 230;
     var rotate = positions[fav.key] ? positions[fav.key].rotate : (i % 2 === 0 ? -4 : 4);
     html += '<article class="fridge-note" data-key="' + fav.key + '" data-rotate="' + rotate + '" style="left:' + left + 'px;top:' + top + 'px;transform:rotate(' + rotate + 'deg);">';
     html += '<img src="' + fav.image + '" alt="' + fav.title + '"><h3>' + fav.title + '</h3></article>';
@@ -618,15 +668,15 @@ function initCollectionPage() {
       var boardRect = board.getBoundingClientRect();
       var offX = e.clientX - note.getBoundingClientRect().left;
       var offY = e.clientY - note.getBoundingClientRect().top;
-      var rot  = note.dataset.rotate || "0";
+      var rot = note.dataset.rotate || "0";
       note.style.zIndex = 99;
       note.style.transform = "rotate(0deg) scale(1.05)";
 
       document.onmousemove = function (me) {
-        var l = Math.min(Math.max(me.clientX - boardRect.left - offX, 0), board.clientWidth  - note.offsetWidth);
-        var t = Math.min(Math.max(me.clientY - boardRect.top  - offY, 0), board.clientHeight - note.offsetHeight);
+        var l = Math.min(Math.max(me.clientX - boardRect.left - offX, 0), board.clientWidth - note.offsetWidth);
+        var t = Math.min(Math.max(me.clientY - boardRect.top - offY, 0), board.clientHeight - note.offsetHeight);
         note.style.left = l + "px";
-        note.style.top  = t + "px";
+        note.style.top = t + "px";
       };
       document.onmouseup = function () {
         note.style.transform = "rotate(" + rot + "deg)";
@@ -634,7 +684,7 @@ function initCollectionPage() {
         pos[note.dataset.key] = { left: parseInt(note.style.left), top: parseInt(note.style.top), rotate: parseInt(rot) };
         localStorage.setItem("nailongNotePositions", JSON.stringify(pos));
         document.onmousemove = null;
-        document.onmouseup   = null;
+        document.onmouseup = null;
       };
     };
   });
@@ -669,9 +719,9 @@ function initCategoryPage() {
 
 // 把当前分类、当前页的素材渲染到网格
 function renderCategoryItems() {
-  var grid  = document.getElementById("categoryGrid");
-  var pgEl  = document.getElementById("pagination");
-  var list  = [];
+  var grid = document.getElementById("categoryGrid");
+  var pgEl = document.getElementById("pagination");
+  var list = [];
 
   materialGroups.forEach(function (g) {
     if (curCategory !== "all" && g.category !== curCategory) return;
@@ -682,7 +732,7 @@ function renderCategoryItems() {
   });
 
   var totalPages = Math.ceil(list.length / pageSize);
-  var pageItems  = list.slice((curPage - 1) * pageSize, curPage * pageSize);
+  var pageItems = list.slice((curPage - 1) * pageSize, curPage * pageSize);
 
   var html = "";
   pageItems.forEach(function (item) {
@@ -727,7 +777,7 @@ function renderCategoryItems() {
 
 // 首页和分类页的拖放收藏功能
 function initDragAndDrop() {
-  var dropZone    = document.getElementById("dropZone");
+  var dropZone = document.getElementById("dropZone");
   var favoriteList = document.getElementById("favoriteList");
   if (!dropZone) return;
 
@@ -739,19 +789,19 @@ function initDragAndDrop() {
 
   document.querySelectorAll(".feature-card").forEach(function (card) {
     card.ondragstart = function (e) {
-      e.dataTransfer.setData("text/plain",    card.dataset.title);
+      e.dataTransfer.setData("text/plain", card.dataset.title);
       e.dataTransfer.setData("text/category", card.dataset.category || "");
-      e.dataTransfer.setData("text/file",     card.dataset.file || "");
+      e.dataTransfer.setData("text/file", card.dataset.file || "");
     };
   });
 
-  dropZone.ondragover  = function (e) { e.preventDefault(); dropZone.className = "drop-zone over"; };
-  dropZone.ondragleave = function ()  { dropZone.className = "drop-zone"; };
+  dropZone.ondragover = function (e) { e.preventDefault(); dropZone.className = "drop-zone over"; };
+  dropZone.ondragleave = function () { dropZone.className = "drop-zone"; };
   dropZone.ondrop = function (e) {
     e.preventDefault();
-    var title    = e.dataTransfer.getData("text/plain");
+    var title = e.dataTransfer.getData("text/plain");
     var category = e.dataTransfer.getData("text/category");
-    var file     = e.dataTransfer.getData("text/file");
+    var file = e.dataTransfer.getData("text/file");
     if (title && category && file) {
       addFavorite(category, file, title);
       renderFavoriteList();
@@ -771,7 +821,7 @@ function addFavorite(category, file, title) {
   if (!image) return;
 
   var list = JSON.parse(localStorage.getItem("nailongFavorites") || "[]");
-  var key  = category + "|" + file;
+  var key = category + "|" + file;
   if (!list.some(function (f) { return f.key === key; })) {
     list.push({ key: key, category: category, file: file, title: title, image: image });
     localStorage.setItem("nailongFavorites", JSON.stringify(list));
@@ -806,13 +856,13 @@ function renderFavoriteList() {
 
 // 大笑页：默认静音自动播放，点按钮后开声音
 function initSmileVideo() {
-  var video  = document.getElementById("smileVideo");
+  var video = document.getElementById("smileVideo");
   var button = document.getElementById("smilePlayButton");
   if (!video || !button) return;
 
   video.play().catch(function () { button.textContent = "点击播放"; });
   button.onclick = function () {
-    video.muted  = false;
+    video.muted = false;
     video.volume = 1;
     video.play();
     button.textContent = "正在大笑";
