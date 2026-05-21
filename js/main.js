@@ -566,7 +566,7 @@ function drawWordImage(word) {
     download.className = "btn secondary";
   }
 
-  var paths = word.split("").map(function (c) { return BASE_URL + "/images/奶龙字母/" + c + ".jpg"; });
+  var paths = word.split("").map(function (c) { return BASE_URL + "/images/奶龙字母/" + c + ".jpg?_t=" + new Date().getTime(); });
   // 等所有图片加载完再一起绘制
   var imgs = [], loaded = 0, failed = 0;
   paths.forEach(function (src, i) {
@@ -598,21 +598,15 @@ function drawWordImage(word) {
       ctx.drawImage(img, i * cell, 0, cell, cell);
     });
     try {
-      canvas.toBlob(function (blob) {
-        if (!blob) {
-          setError("wordInputError", "图片下载地址生成失败，请重新生成。");
-          return;
-        }
-        var url = URL.createObjectURL(blob);
-        if (download) {
-          download.href = url;
-          download.download = "nailong-" + word + ".png";
-          download.dataset.objectUrl = url;
-          download.className = "btn primary";
-        }
-      }, "image/png");
+      var dataUrl = canvas.toDataURL("image/png");
+      if (download) {
+        download.href = dataUrl;
+        download.download = "nailong-" + word + ".png";
+        download.className = "btn primary";
+      }
     } catch (err) {
-      setError("wordInputError", err.message);
+      console.error(err);
+      setError("wordInputError", "由于跨域策略受限，无法直接下载(" + err.message + ")。您可以尝试右键点击上方图片选择“另存为”。");
       if (download) {
         download.removeAttribute("href");
         download.removeAttribute("download");
