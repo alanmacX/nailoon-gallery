@@ -21,7 +21,9 @@ nailoon-gallery/
 ├── css/
 │   └── style.css       全站统一样式
 ├── js/
-│   └── main.js         全站交互逻辑
+│   ├── common.js       用户状态、素材加载等公共逻辑
+│   ├── favorites.js    拖放收藏等跨页逻辑
+│   └── *.js            各 HTML 页面对应的独立脚本
 ├── README.md           项目说明
 ├── report.md           项目报告
 ├── limits.md           作业要求说明
@@ -43,7 +45,7 @@ nailoon-gallery/
 - `<link rel="icon">`：加载远程图标 `https://image.hakimi.uno/images/favicon.svg`。
 - `<link rel="stylesheet" href="css/style.css">`：引入全站样式文件。
 
-大多数页面末尾都通过 `<script src="js/main.js?..."></script>` 引入统一脚本。脚本带版本参数，用来避免浏览器缓存旧文件。
+每个页面末尾先引入公共脚本，再引入当前页面专属脚本。例如首页引入 `common.js`、`favorites.js` 和 `index.js`，登录页只引入 `common.js` 和 `login.js`。
 
 ### 2. 公共页头 `header.site-header.glass`
 
@@ -110,7 +112,9 @@ body
 │   └── section.content-layout.section-shell
 ├── div#floatAd.float-ad.glass
 ├── footer.site-footer
-└── script js/main.js
+├── script js/common.js
+├── script js/favorites.js
+└── script js/index.js
 ```
 
 ### 3. 头部元素
@@ -226,7 +230,9 @@ body
 │   ├── section.page-head
 │   └── section.category-layout
 ├── footer.site-footer
-└── script js/main.js?v=1.1.4
+├── script js/common.js
+├── script js/favorites.js
+└── script js/category.js
 ```
 
 ### 3. 页面头部
@@ -324,7 +330,9 @@ body
 ├── main.section-shell.page-main
 │   └── div#detailWrap.detail-page
 ├── footer.site-footer
-└── script js/main.js
+├── script js/common.js
+├── script js/favorites.js
+└── script js/detail.js
 ```
 
 ### 3. 静态元素
@@ -402,7 +410,8 @@ body
 │   ├── section.page-head
 │   └── section#collectionGrid.fridge-board
 ├── footer.site-footer
-└── script js/main.js
+├── script js/common.js
+└── script js/collection.js
 ```
 
 ### 3. 页面头部
@@ -472,7 +481,8 @@ body
 ├── main.section-shell.page-main.word-layout
 │   ├── section.form-card.glass
 │   └── section.panel.word-preview
-└── script js/main.js
+├── script js/common.js
+└── script js/word.js
 ```
 
 ### 3. 输入表单区域
@@ -531,7 +541,8 @@ body.simple-page
 ├── div#quizBox.quiz-box
 ├── div#quizUnlock.quiz-unlock
 ├── div#quizResult.quiz-result
-└── script js/main.js
+├── script js/common.js
+└── script js/contact.js
 ```
 
 ### 3. 开始提示区
@@ -653,7 +664,8 @@ body
 │   ├── button#smilePlayButton
 │   └── section.video-panel
 ├── footer.site-footer
-└── script js/main.js
+├── script js/common.js
+└── script js/smile.js
 ```
 
 ### 3. 页面元素
@@ -689,7 +701,8 @@ body.simple-page
 ├── header.site-header.glass
 ├── main.form-wrap
 │   └── section.form-card.glass
-└── script js/main.js
+├── script js/common.js
+└── script js/login.js
 ```
 
 ### 3. 表单元素
@@ -723,15 +736,14 @@ body.simple-page
 
 ### 1. 全局数据
 
-`main.js` 中的全局变量：
+拆分后的脚本中主要数据如下：
 
 - `BASE_URL`：远程图床基础地址，值为 `https://image.hakimi.uno`。
 - `materialGroups`：所有分类素材列表，页面加载后通过远程请求填充。
-- `bannerSlides`：首页轮播使用的三张随机动图。
 - `materialConfig`：素材分类配置数组。
-- `curCategory`：分类页当前分类。
-- `curPage`：分类页当前页。
-- `pageSize`：分类页每页数量，当前为 12。
+- `curCategory`：分类页当前分类，位于 `category.js`。
+- `curPage`：分类页当前页，位于 `category.js`。
+- `pageSize`：分类页每页数量，位于 `category.js`，当前为 12。
 
 ### 2. 素材分类配置
 
@@ -755,23 +767,20 @@ body.simple-page
 3. `fetchAllMaterials()` 逐个请求远程分类路径。
 4. 过滤文件类型，只保留图片文件。
 5. 生成 `materialGroups`。
-6. 调用 `initAll()`。
+6. 当前页面脚本执行自己的初始化函数。
 
-`initAll()` 统一初始化：
+拆分后的页面绑定关系：
 
-- `showCurrentUser()`：显示登录昵称。
-- `initLoginForm()`：登录页表单。
-- `initPersonalityForm()`：测试页。
-- `initWordForm()`：组词页。
-- `initSlider()`：首页轮播。
-- `initCollectionPage()`：收藏页。
-- `initCategoryPage()`：分类页。
-- `initDragAndDrop()`：拖拽收藏。
-- `initSmileVideo()`：视频页。
-- `initFloatAd()`：首页浮动广告。
-- `initDetailPage()`：详情页。
+- `index.js`：首页轮播、首页收藏拖放、浮动广告。
+- `category.js`：分类筛选、分页、素材卡片渲染。
+- `detail.js`：详情内容、同类推荐、详情页收藏。
+- `collection.js`：收藏画廊与冰箱贴拖动。
+- `word.js`：奶龙字母组词和 Canvas 下载。
+- `contact.js`：心理测试流程与结果生成。
+- `smile.js`：大笑视频播放控制。
+- `login.js`：登录表单验证。
 
-每个初始化函数都会先判断对应 DOM 是否存在，因此同一个 `main.js` 可以被所有页面共用。
+公共能力由 `common.js` 和 `favorites.js` 提供，各 HTML 页面只绑定自己需要的脚本。
 
 ### 4. 本地存储
 

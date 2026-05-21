@@ -18,7 +18,9 @@
 ## 文件说明
 
 - `css/style.css`：所有页面的统一样式。
-- `js/main.js`：表单验证、人格测试、用户状态、图片切换、Canvas 统计图、拖放收藏、分页、素材渲染和奶龙组词。
+- `js/common.js`：用户状态、素材配置、素材列表加载等公共能力。
+- `js/favorites.js`：拖放收藏、收藏列表渲染等跨页能力。
+- `js/*.js`：每个页面绑定自己的脚本，例如 `index.js`、`category.js`、`contact.js`。
 - `images/`：本地主题图片资源，其中 `photos/奶`、`photos/奶果`、`photos/奶气`、`gifs`、`奶龙字母` 会导入分类页。
 - `report.md`：期末报告初稿，可按自己的姓名、学号和截图继续补充。
 
